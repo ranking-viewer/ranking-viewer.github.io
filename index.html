@@ -46,17 +46,18 @@
     </footer>
   </div>
 
-  <!-- モーダル: アプリの仕組み・使い方（画像4枚レイアウト） -->
+  <!-- モーダル: アプリの仕組み・使い方 -->
   <div id="info-modal" class="modal-overlay" onclick="closeInfoModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
       <h2 style="margin-bottom: 16px; font-weight:800; font-size: 1.3rem; color: var(--text-main);">💡 アプリの仕組み・使い方</h2>
+      <p style="font-size: 0.8rem; color: var(--text-sub); margin-bottom: 8px;">※画像タップで拡大表示できます</p>
       
-      <!-- 画像4枚レイアウト（2×2 グリッド） -->
+      <!-- 画像4枚レイアウト（クリックで拡大表示） -->
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px;">
-        <img src="img/guide1.png" alt="使い方ガイド1" style="width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--border-color); object-fit: cover;">
-        <img src="img/guide2.png" alt="使い方ガイド2" style="width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--border-color); object-fit: cover;">
-        <img src="img/guide3.png" alt="使い方ガイド3" style="width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--border-color); object-fit: cover;">
-        <img src="img/guide4.png" alt="使い方ガイド4" style="width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--border-color); object-fit: cover;">
+        <img src="img/guide1.png" alt="使い方ガイド1" class="guide-img" onclick="openImageModal(this.src)">
+        <img src="img/guide2.png" alt="使い方ガイド2" class="guide-img" onclick="openImageModal(this.src)">
+        <img src="img/guide3.png" alt="使い方ガイド3" class="guide-img" onclick="openImageModal(this.src)">
+        <img src="img/guide4.png" alt="使い方ガイド4" class="guide-img" onclick="openImageModal(this.src)">
       </div>
 
       <ul style="padding-left: 20px; margin-bottom: 20px; line-height: 1.7; color:var(--text-main); font-size: 0.9rem;">
@@ -66,6 +67,14 @@
       </ul>
       
       <button class="tab-btn active" style="width:100%; padding: 12px; font-size: 1rem;" onclick="closeInfoModal()">閉じる</button>
+    </div>
+  </div>
+
+  <!-- 画像拡大プレビュー用モーダル -->
+  <div id="image-modal" class="image-modal-overlay" onclick="closeImageModal()">
+    <div class="image-modal-container" onclick="event.stopPropagation()">
+      <button class="image-modal-close" onclick="closeImageModal()" aria-label="閉じる">×</button>
+      <img id="enlarged-image" src="" alt="拡大画像">
     </div>
   </div>
 

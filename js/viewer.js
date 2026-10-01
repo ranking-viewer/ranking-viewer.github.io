@@ -12,7 +12,7 @@ let autoPageTimer = null;
 let day2ToggleState = 'day2'; // 'day2' または 'total'
 const PAGE_ROTATE_INTERVAL = 6000; // ページ切り替え間隔（6秒）
 
-// 日本時間の12時以降かどうか判定（全ブラウザ対応版）
+// 日本時間の12時以降かどうか判定
 function isAfterJst12PM() {
   try {
     const now = new Date();
@@ -36,7 +36,7 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
-// 2. 画面高さに合わせて1画面あたりの件数を自動計算（計算ガード付き）
+// 2. 画面高さに合わせて1画面あたりの件数を自動計算
 function calculatePageSize() {
   const container = document.getElementById('viewer-ranking');
   if (!container) return 8;
@@ -90,12 +90,10 @@ function startPageRotation() {
     const isAfter12 = isAfterJst12PM();
 
     if (currentTab === 'day2' && !isAfter12) {
-      // 2日目で12時前の場合は、「2日目」と「2日合計」を交互に切り替え
       day2ToggleState = (day2ToggleState === 'day2') ? 'total' : 'day2';
       currentPage = 0;
       renderCurrentPage();
     } else {
-      // 通常のページ送り処理
       const currentData = getCurrentTargetData();
       const pageSize = calculatePageSize();
       if (currentData.length > pageSize) {
@@ -112,11 +110,10 @@ function getCurrentTargetData() {
   if (currentTab === 'day1') return day1DataCache;
   if (currentTab === 'total') return totalDataCache;
 
-  // day2 タブの処理
   if (isAfterJst12PM()) {
-    return totalDataCache; // 12時以降は合計固定
+    return totalDataCache;
   } else {
-    return day2ToggleState === 'day2' ? day2DataCache : totalDataCache; // 12時前は交互
+    return day2ToggleState === 'day2' ? day2DataCache : totalDataCache;
   }
 }
 
@@ -157,7 +154,7 @@ function toggleFullScreen() {
   if (nav) nav.classList.remove('active');
 }
 
-// モーダル制御（表示二重ガード）
+// 情報モーダル制御
 function openInfoModal() {
   const modal = document.getElementById('info-modal');
   if (modal) {
@@ -176,7 +173,26 @@ function closeInfoModal() {
   }
 }
 
-// レスポンスデータから配列を抽出する万能関数（GASの戻り値形式を吸収）
+// 画像拡大モーダル制御
+function openImageModal(src) {
+  const modal = document.getElementById('image-modal');
+  const img = document.getElementById('enlarged-image');
+  if (modal && img) {
+    img.src = src;
+    modal.classList.add('active');
+    modal.style.display = 'flex';
+  }
+}
+
+function closeImageModal() {
+  const modal = document.getElementById('image-modal');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+  }
+}
+
+// レスポンスデータから配列を抽出する万能関数
 function extractRankingArray(data) {
   if (Array.isArray(data)) return data;
   if (data && Array.isArray(data.ranking)) return data.ranking;
@@ -267,7 +283,6 @@ function renderCurrentPage() {
     else if (rank === 2) { rankClass = 'rank-2'; crown = '🥈 '; }
     else if (rank === 3) { rankClass = 'rank-3'; crown = '🥉 '; }
 
-    // 10分以内の新規投稿判定（NEWバッジ）
     const newBadge = item.is_new ? '<span style="background:#ef4444; color:white; font-size:0.75rem; font-weight:bold; padding:2px 8px; border-radius:10px; margin-left:8px; vertical-align:middle;">NEW</span>' : '';
 
     return `
