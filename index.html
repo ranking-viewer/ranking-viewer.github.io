@@ -2,24 +2,23 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>リアルタイムランキング</title>
-  <link rel="stylesheet" href="/css/viewer.css">
-  <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#ffffff">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>文化祭 リアルタイムランキング</title>
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/viewer.css">
 </head>
 <body>
+
   <div class="app-container">
     <!-- ヘッダー -->
     <header class="header-bar">
-      <h1 class="site-title">🏆 RANKING BOARD</h1>
+      <h1 class="site-title">🏆 文化祭ランキング</h1>
       
       <!-- ハンバーガーメニューボタン -->
       <button class="menu-btn" onclick="toggleMenu()" aria-label="メニューを開く">🍔</button>
 
-      <!-- ドロップダウンメニュー -->
+      <!-- ドロップダウンメニュー（入力項目は削除し、一般閲覧用に最適化） -->
       <nav id="nav-menu" class="nav-menu">
-        <button class="nav-item" onclick="openInputModal()">📝 スコアを入力する</button>
         <button class="nav-item" onclick="openInfoModal()">💡 アプリの仕組み・使い方</button>
         <button class="nav-item" onclick="toggleFullScreen()">🖥️ 全画面表示（モニター用）</button>
         <button class="nav-item" onclick="location.reload()">🔄 手動更新</button>
@@ -37,47 +36,47 @@
     <main id="viewer-ranking" class="ranking-list">
       <!-- JavaScriptで自動生成 -->
     </main>
+
+    <!-- フッター -->
+    <footer style="text-align: center; margin-top: 20px; padding: 12px; font-size: 0.85rem; color: var(--text-sub);">
+      <p>※本アプリの閲覧・ご利用に伴う通信料はご利用者様のご負担となります。</p>
+      <p style="margin-top: 4px;">System Developed by <strong>有志ITスタッフ</strong></p>
+    </footer>
   </div>
 
-  <!-- フッター通信料注記 -->
-  <footer>
-    <p>※本アプリの閲覧・ご利用に伴う通信料はご利用者様（個人）のご負担となります。</p>
-  </footer>
+  <!-- モーダル: アプリの仕組み・使い方（画像4枚埋め込み） -->
+  <div id="info-modal" class="modal-overlay" onclick="closeInfoModal()">
+    <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 580px; max-height: 85vh; overflow-y: auto;">
+      <h2 style="margin-bottom: 16px; font-weight:800; font-size: 1.4rem;">💡 アプリの仕組み・使い方</h2>
+      
+      <!-- 画像4枚レイアウト（2×2 グリッド） -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
+        <img src="img/guide1.png" alt="説明1" style="width: 100%; border-radius: 8px; border: 1px solid var(--border-color); object-fit: cover;">
+        <img src="img/guide2.png" alt="説明2" style="width: 100%; border-radius: 8px; border: 1px solid var(--border-color); object-fit: cover;">
+        <img src="img/guide3.png" alt="説明3" style="width: 100%; border-radius: 8px; border: 1px solid var(--border-color); object-fit: cover;">
+        <img src="img/guide4.png" alt="説明4" style="width: 100%; border-radius: 8px; border: 1px solid var(--border-color); object-fit: cover;">
+      </div>
 
-  <!-- モーダル: アプリの仕組み -->
-  <div id="info-modal" class="modal-overlay">
-    <div class="modal-content">
-      <h2 style="margin-bottom: 16px; font-weight:800;">💡 アプリの仕組み・使い方</h2>
-      <p style="margin-bottom: 12px; line-height:1.6; color:var(--text-sub);">
-        本システムは Google フォームで送信されたスコアをリアルタイムで集計し、上位ランキングを表示しています！
-      </p>
-      <ul style="padding-left: 20px; margin-bottom: 20px; line-height: 1.8; color:var(--text-main);">
-        <li>スコアの入力には運営から共有された<strong>「入力用共通パスワード」</strong>が必要です。</li>
-        <li>通信料は個人利用（各自ご負担）となります。</li>
+      <ul style="padding-left: 20px; margin-bottom: 20px; line-height: 1.8; color:var(--text-main); font-size: 0.95rem;">
+        <li>スコアはリアルタイム（約15秒間隔）で更新されます。</li>
+        <li>直近10分以内のスコア登録には「NEW」が表示されます。</li>
       </ul>
-      <button class="tab-btn active" style="width:100%;" onclick="closeInfoModal()">閉じる</button>
+      <button class="tab-btn active" style="width:100%; padding: 12px;" onclick="closeInfoModal()">閉じる</button>
     </div>
   </div>
 
-  <!-- モーダル: スコア入力（共通パスワード・アカウントID入力） -->
-  <div id="input-modal" class="modal-overlay">
-    <div class="modal-content">
-      <h2 style="margin-bottom: 16px; font-weight:800;">📝 スコア入力</h2>
-      
-      <label style="font-size:0.85rem; font-weight:700; color:var(--text-sub);">アカウントID (学内ID / 受付番号)</label>
-      <input type="text" id="modal-account-id" style="width:100%; padding:12px; margin:6px 0 16px 0; border:2px solid var(--border-color); border-radius:10px;" placeholder="例: USER001">
-
-      <label style="font-size:0.85rem; font-weight:700; color:var(--text-sub);">共通パスワード</label>
-      <input type="password" id="modal-common-pw" style="width:100%; padding:12px; margin:6px 0 20px 0; border:2px solid var(--border-color); border-radius:10px;" placeholder="共通パスワードを入力">
-
-      <div style="display:flex; gap:10px;">
-        <button class="tab-btn" style="flex:1;" onclick="closeInputModal()">キャンセル</button>
-        <button class="tab-btn active" style="flex:1;" onclick="submitInputForm()">フォームを開く</button>
+  <!-- 下部テロップ・時刻バー -->
+  <div class="ticker-bar">
+    <div class="ticker-clock" id="live-clock">00:00:00</div>
+    <div class="ticker-label">📢 お知らせ</div>
+    <div class="ticker-content-wrapper">
+      <div class="ticker-content">
+        <span>【文化祭ランキング】リアルタイム更新中！ ｜ ⚠️ モニターには触れないでください ｜ 🏆 スコア登録は司会・スタッフまで！ ｜ 📢 10分以内の最新スコアには「NEW」が表示されます！</span>
       </div>
     </div>
   </div>
 
-  <script src="/js/config.js"></script>
-  <script src="/js/viewer.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/viewer.js"></script>
 </body>
 </html>
