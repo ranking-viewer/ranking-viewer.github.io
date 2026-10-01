@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>システム管理</title>
+  <link rel="stylesheet" href="/css/common.css">
+</head>
+<body>
+  <div class="container" style="margin-top: 30px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+      <h2>管理ダッシュボード</h2>
+      <button class="btn" style="background:#ef4444;" onclick="Auth.logout()">ログアウト</button>
+    </div>
+
+    <!-- システム設定パネル -->
+    <div style="background: var(--bg-card); padding: 20px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 30px;">
+      <h3 style="margin-bottom: 16px;">システム設定</h3>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div>
+          <label style="font-size: 0.85rem; color: var(--text-sub);">閲覧用ワンタイムキー</label>
+          <input type="text" id="one-time-key-setting" class="input-field" style="margin-top: 4px;">
+        </div>
+        <div>
+          <label style="font-size: 0.85rem; color: var(--text-sub);">NGワード（カンマ区切り）</label>
+          <input type="text" id="ng-words-setting" class="input-field" style="margin-top: 4px;">
+        </div>
+      </div>
+      <button class="btn" onclick="saveSettings()">設定を更新保存</button>
+    </div>
+
+    <!-- データ一覧 -->
+    <h3>データ一覧（表示 / 非表示切り替え）</h3>
+    <div style="overflow-x: auto; margin-top: 12px;">
+      <table style="width: 100%; border-collapse: collapse; background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border);">
+        <thead>
+          <tr style="background: rgba(255,255,255,0.05); text-align: left;">
+            <th style="padding: 12px;">日時</th>
+            <th style="padding: 12px;">アカウントID</th>
+            <th style="padding: 12px;">ニックネーム</th>
+            <th style="padding: 12px;">スコア</th>
+            <th style="padding: 12px;">日程</th>
+            <th style="padding: 12px;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="admin-table-body">
+          <!-- JS描画 -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/admin.js"></script>
+</body>
+</html>

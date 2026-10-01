@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>リアルタイムランキング</title>
+  <link rel="stylesheet" href="/css/viewer.css">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#ffffff">
+</head>
+<body>
+  <div class="app-container">
+    <!-- ヘッダー -->
+    <header class="header-bar">
+      <h1 class="site-title">🏆 RANKING BOARD</h1>
+      
+      <!-- ハンバーガーメニューボタン -->
+      <button class="menu-btn" onclick="toggleMenu()" aria-label="メニューを開く">🍔</button>
+
+      <!-- ドロップダウンメニュー -->
+      <nav id="nav-menu" class="nav-menu">
+        <button class="nav-item" onclick="openInputModal()">📝 スコアを入力する</button>
+        <button class="nav-item" onclick="openInfoModal()">💡 アプリの仕組み・使い方</button>
+        <button class="nav-item" onclick="toggleFullScreen()">🖥️ 全画面表示（モニター用）</button>
+        <button class="nav-item" onclick="location.reload()">🔄 手動更新</button>
+      </nav>
+    </header>
+
+    <!-- カテゴリ切り替えタブ -->
+    <div class="category-nav">
+      <button class="tab-btn" onclick="switchCategory('day1', this)">1日目</button>
+      <button class="tab-btn" onclick="switchCategory('day2', this)">2日目</button>
+      <button class="tab-btn active" onclick="switchCategory('total', this)">2日合計</button>
+    </div>
+
+    <!-- ランキング一覧表示領域 -->
+    <main id="viewer-ranking" class="ranking-list">
+      <!-- JavaScriptで自動生成 -->
+    </main>
+  </div>
+
+  <!-- フッター通信料注記 -->
+  <footer>
+    <p>※本アプリの閲覧・ご利用に伴う通信料はご利用者様（個人）のご負担となります。</p>
+  </footer>
+
+  <!-- モーダル: アプリの仕組み -->
+  <div id="info-modal" class="modal-overlay">
+    <div class="modal-content">
+      <h2 style="margin-bottom: 16px; font-weight:800;">💡 アプリの仕組み・使い方</h2>
+      <p style="margin-bottom: 12px; line-height:1.6; color:var(--text-sub);">
+        本システムは Google フォームで送信されたスコアをリアルタイムで集計し、上位ランキングを表示しています！
+      </p>
+      <ul style="padding-left: 20px; margin-bottom: 20px; line-height: 1.8; color:var(--text-main);">
+        <li>スコアの入力には運営から共有された<strong>「入力用共通パスワード」</strong>が必要です。</li>
+        <li>通信料は個人利用（各自ご負担）となります。</li>
+      </ul>
+      <button class="tab-btn active" style="width:100%;" onclick="closeInfoModal()">閉じる</button>
+    </div>
+  </div>
+
+  <!-- モーダル: スコア入力（共通パスワード・アカウントID入力） -->
+  <div id="input-modal" class="modal-overlay">
+    <div class="modal-content">
+      <h2 style="margin-bottom: 16px; font-weight:800;">📝 スコア入力</h2>
+      
+      <label style="font-size:0.85rem; font-weight:700; color:var(--text-sub);">アカウントID (学内ID / 受付番号)</label>
+      <input type="text" id="modal-account-id" style="width:100%; padding:12px; margin:6px 0 16px 0; border:2px solid var(--border-color); border-radius:10px;" placeholder="例: USER001">
+
+      <label style="font-size:0.85rem; font-weight:700; color:var(--text-sub);">共通パスワード</label>
+      <input type="password" id="modal-common-pw" style="width:100%; padding:12px; margin:6px 0 20px 0; border:2px solid var(--border-color); border-radius:10px;" placeholder="共通パスワードを入力">
+
+      <div style="display:flex; gap:10px;">
+        <button class="tab-btn" style="flex:1;" onclick="closeInputModal()">キャンセル</button>
+        <button class="tab-btn active" style="flex:1;" onclick="submitInputForm()">フォームを開く</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/viewer.js"></script>
+</body>
+</html>

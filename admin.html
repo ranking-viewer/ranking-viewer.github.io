@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ログイン - イベントシステム</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#2563eb">
+</head>
+<body>
+  <div class="container" style="max-width: 420px; margin-top: 60px;">
+    <div style="background: var(--bg-card); padding: 32px; border-radius: var(--radius); border: 1px solid var(--border); text-align: center;">
+      <h2 style="margin-bottom: 24px; font-weight:800;">EVENT ACCESS</h2>
+      
+      <!-- 一般閲覧・参加者用ログイン -->
+      <div id="user-login-section">
+        <input type="text" id="account-id-input" class="input-field" placeholder="アカウントID (学内ID / 受付番号)" required>
+        <input type="text" id="key-input" class="input-field" placeholder="ワンタイムキーを入力" required>
+        <button class="btn" style="width: 100%;" onclick="onKeyLogin()">閲覧・入力画面へ</button>
+      </div>
+
+      <hr style="margin: 28px 0; border: none; border-top: 1px solid var(--border);">
+
+      <!-- 管理者ログイン -->
+      <details>
+        <summary style="color: var(--text-sub); cursor: pointer; font-size:0.9rem;">管理者アクセス</summary>
+        <div style="margin-top: 16px;">
+          <input type="password" id="admin-pw" class="input-field" placeholder="管理者パスワード">
+          <button class="btn" style="width: 100%; background: #475569;" onclick="onAdminLogin()">管理者ログイン</button>
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/auth.js"></script>
+  <script>
+    async function onKeyLogin() {
+      const accountId = document.getElementById('account-id-input').value.trim();
+      const key = document.getElementById('key-input').value.trim();
+
+      if (!accountId) {
+        alert('アカウントIDを入力してください');
+        return;
+      }
+      if (!key) {
+        alert('ワンタイムキーを入力してください');
+        return;
+      }
+
+      // アカウントIDをセッションに一時保存
+      sessionStorage.setItem('account_id', accountId);
+
+      // ワンタイムキーの検証処理
+      const success = await Auth.verifyOneTimeKey(key);
+      if (success) {
+        window.location.href = '/viewer/index.html';
+      } else {
+        alert('ワンタイムキーが正しくありません');
+      }
+    }
+
+    async function onAdminLogin() {
+      const pw = document.getElementById('admin-pw').value;
+      if (!pw) return alert('パスワードを入力してください');
+      const success = await Auth.loginAdmin(pw);
+      if (success) {
+        window.location.href = '/admin/index.html';
+      } else {
+        alert('パスワードが間違っています');
+      }
+    }
+  </script>
+</body>
+</html>

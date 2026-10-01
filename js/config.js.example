@@ -1,0 +1,7 @@
+// ※ このファイルを複製して config.js を作成してください
+const CONFIG = {
+  // GAS Web App デプロイ後のURL
+  GAS_API_URL: "https://script.google.com/macros/s/YOUR_EXEC_ID/exec",
+  // 自動更新間隔（ミリ秒）
+  AUTO_REFRESH_INTERVAL: 5000
+};
