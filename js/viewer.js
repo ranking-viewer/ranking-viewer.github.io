@@ -1,7 +1,7 @@
 // --- 状態管理・グローバル変数 ---
 let currentTab = 'total';
 
-// データキャッシュ
+// データキャッシュ（メモリ上）
 let day1DataCache = [];
 let day2DataCache = [];
 let totalDataCache = [];
@@ -67,8 +67,36 @@ function updateClock() {
   clockEl.textContent = `${hours}:${minutes}:${seconds}`;
 }
 
-// 4. 初期化 & タイマー起動
+// 4. ローカルストレージ（閲覧キャッシュ）制御
+function loadLocalCache(key) {
+  try {
+    const data = localStorage.getItem(`topscore_cache_${key}`);
+    return data ? JSON.parse(data) : null;
+  } catch (e) {
+    console.error('キャッシュ読み込み失敗:', e);
+    return null;
+  }
+}
+
+function saveLocalCache(key, data) {
+  try {
+    localStorage.setItem(`topscore_cache_${key}`, JSON.stringify(data));
+  } catch (e) {
+    console.error('キャッシュ保存失敗:', e);
+  }
+}
+
+// 5. 初期化 & タイマー起動
 document.addEventListener('DOMContentLoaded', () => {
+  // キャッシュから初期データを即時読み込み（画面のチラつき防止）
+  day1DataCache = loadLocalCache('day1') || [];
+  day2DataCache = loadLocalCache('day2') || [];
+  totalDataCache = loadLocalCache('total') || [];
+
+  // キャッシュデータがあればまず描画
+  renderCurrentPage();
+
+  // 最新データを取得
   fetchViewerData('total');
 
   // 15秒ごとにバックグラウンドで最新データを取得
@@ -80,6 +108,17 @@ document.addEventListener('DOMContentLoaded', () => {
   // 時計更新タイマー起動
   updateClock();
   setInterval(updateClock, 1000);
+});
+
+// メニューの外側（画面のどこか）をクリックしたときにメニューを閉じる
+document.addEventListener('click', (event) => {
+  const nav = document.getElementById('nav-menu');
+  const menuBtn = document.querySelector('.menu-btn');
+  if (nav && nav.classList.contains('active')) {
+    if (!nav.contains(event.target) && !menuBtn.contains(event.target)) {
+      nav.classList.remove('active');
+    }
+  }
 });
 
 // 自動タイマー制御（ページ送り ＆ 2日目交互切り替え）
@@ -192,7 +231,7 @@ function closeImageModal() {
   }
 }
 
-// レスポンスデータから配列を抽出する万能関数
+// レスポンスデータから配列を抽出する関数
 function extractRankingArray(data) {
   if (Array.isArray(data)) return data;
   if (data && Array.isArray(data.ranking)) return data.ranking;
@@ -200,7 +239,7 @@ function extractRankingArray(data) {
   return [];
 }
 
-// データ取得処理（API経由）
+// データ取得処理（API経由 ＆ ローカルキャッシュ保存）
 async function fetchViewerData(category, resetPage = true) {
   currentTab = category;
   if (resetPage) {
@@ -227,18 +266,29 @@ async function fetchViewerData(category, resetPage = true) {
 
       day2DataCache = extractRankingArray(dataDay2);
       totalDataCache = extractRankingArray(dataTotal);
+
+      // キャッシュに保存
+      saveLocalCache('day2', day2DataCache);
+      saveLocalCache('total', totalDataCache);
     } else {
       const res = await fetch(`${CONFIG.GAS_API_URL}?day=${category}`);
       const data = await res.json();
       const list = extractRankingArray(data);
       
-      if (category === 'day1') day1DataCache = list;
-      if (category === 'total') totalDataCache = list;
+      if (category === 'day1') {
+        day1DataCache = list;
+        saveLocalCache('day1', day1DataCache);
+      }
+      if (category === 'total') {
+        totalDataCache = list;
+        saveLocalCache('total', totalDataCache);
+      }
     }
 
     renderCurrentPage();
   } catch (e) {
     console.error('Fetch Error:', e);
+    // エラー時でも既存のキャッシュデータでレンダリングを試みる
     renderCurrentPage();
   }
 }
