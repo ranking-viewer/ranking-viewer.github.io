@@ -37,7 +37,7 @@ function calculatePageSize() {
   if (!container) return 8;
 
   const availableHeight = window.innerHeight - container.getBoundingClientRect().top - 80;
-  const cardHeight = 74; 
+  const cardHeight = 96; 
   const calculatedSize = Math.floor(availableHeight / cardHeight);
   return Math.max(3, calculatedSize);
 }
