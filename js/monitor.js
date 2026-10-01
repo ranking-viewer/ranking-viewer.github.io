@@ -75,7 +75,7 @@ function renderMonitor(ranking) {
           <span class="nickname">${escapeHtml(item.nickname)}</span>
           ${item.is_new ? '<span class="new-badge">NEW</span>' : ''}
         </div>
-        <div class="score">${Number(item.score).toLocaleString()} 点</div>
+        <div class="score">${Number(item.score).toLocaleString()} 問</div>
       </div>
     `;
   }).join('');
