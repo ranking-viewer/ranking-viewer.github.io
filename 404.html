@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ページが見つかりません | TopScore LIVE</title>
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/viewer.css">
+  <style>
+    .error-container {
+      min-height: 70vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 20px;
+    }
+    .error-icon {
+      font-size: 4rem;
+      margin-bottom: 8px;
+    }
+    .error-code {
+      font-size: 4.5rem;
+      font-weight: 900;
+      color: var(--primary-color, #2563eb);
+      margin: 0;
+      line-height: 1;
+    }
+    .error-title {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--text-main, #1e293b);
+      margin: 16px 0 8px 0;
+    }
+    .error-desc {
+      font-size: 0.9rem;
+      color: var(--text-sub, #64748b);
+      margin-bottom: 24px;
+      line-height: 1.6;
+      max-width: 360px;
+    }
+    .back-btn {
+      display: inline-block;
+      padding: 12px 28px;
+      background-color: var(--primary-color, #2563eb);
+      color: white;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+      transition: all 0.2s ease;
+    }
+    .back-btn:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+    }
+    .redirect-text {
+      margin-top: 20px;
+      font-size: 0.85rem;
+      color: var(--text-sub, #64748b);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- ヘッダー -->
+    <header class="header-bar" style="justify-content: center; text-align: center;">
+      <h1 class="site-title">🏆 TopScore LIVE</h1>
+    </header>
+
+    <!-- エラーコンテンツ -->
+    <main class="error-container">
+      <div class="error-icon">🔍</div>
+      <h1 class="error-code">404</h1>
+      <h2 class="error-title">ページが見つかりません</h2>
+      <p class="error-desc">
+        アクセスしようとしたページは削除されたか、URLが間違っている可能性があります。
+      </p>
+
+      <a href="index.html" class="back-btn">ランキングトップへ戻る</a>
+
+      <p class="redirect-text">
+        <span id="countdown">5</span> 秒後に自動的にトップページへ移動します...
+      </p>
+    </main>
+  </div>
+
+  <script>
+    // 5秒後に自動的にトップページへ戻るカウントダウン
+    let seconds = 5;
+    const countdownEl = document.getElementById('countdown');
+    const timer = setInterval(() => {
+      seconds--;
+      if (countdownEl) countdownEl.textContent = seconds;
+      if (seconds <= 0) {
+        clearInterval(timer);
+        window.location.href = 'index.html';
+      }
+    }, 1000);
+  </script>
+</body>
+</html>
