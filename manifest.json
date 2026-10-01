@@ -1,7 +1,7 @@
 {
   "name": "リアルタイムランキング",
   "short_name": "ランキング",
-  "start_url": "/viewer/index.html",
+  "start_url": "/monitor/index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
