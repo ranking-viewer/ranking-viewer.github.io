@@ -6,6 +6,8 @@
   <title>文化祭 リアルタイムランキング</title>
   <link rel="stylesheet" href="css/common.css">
   <link rel="stylesheet" href="css/viewer.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#2563eb">
 </head>
 <body>
 
@@ -17,7 +19,7 @@
       <!-- ハンバーガーメニューボタン -->
       <button class="menu-btn" onclick="toggleMenu()" aria-label="メニューを開く">🍔</button>
 
-      <!-- ドロップダウンメニュー（入力項目は削除し、一般閲覧用に最適化） -->
+      <!-- ドロップダウンメニュー（一般閲覧用） -->
       <nav id="nav-menu" class="nav-menu">
         <button class="nav-item" onclick="openInfoModal()">💡 アプリの仕組み・使い方</button>
         <button class="nav-item" onclick="toggleFullScreen()">🖥️ 全画面表示（モニター用）</button>
@@ -34,7 +36,7 @@
 
     <!-- ランキング一覧表示領域 -->
     <main id="viewer-ranking" class="ranking-list">
-      <!-- JavaScriptで自動生成 -->
+      <!-- JavaScriptで自動生成されます -->
     </main>
 
     <!-- フッター -->
@@ -44,24 +46,26 @@
     </footer>
   </div>
 
-  <!-- モーダル: アプリの仕組み・使い方（画像4枚埋め込み） -->
+  <!-- モーダル: アプリの仕組み・使い方（画像4枚レイアウト） -->
   <div id="info-modal" class="modal-overlay" onclick="closeInfoModal()">
-    <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 580px; max-height: 85vh; overflow-y: auto;">
-      <h2 style="margin-bottom: 16px; font-weight:800; font-size: 1.4rem;">💡 アプリの仕組み・使い方</h2>
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <h2 style="margin-bottom: 16px; font-weight:800; font-size: 1.3rem; color: var(--text-main);">💡 アプリの仕組み・使い方</h2>
       
       <!-- 画像4枚レイアウト（2×2 グリッド） -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
-        <img src="img/guide1.png" alt="説明1" style="width: 100%; border-radius: 8px; border: 1px solid var(--border-color); object-fit: cover;">
-        <img src="img/guide2.png" alt="説明2" style="width: 100%; border-radius: 8px; border: 1px solid var(--border-color); object-fit: cover;">
-        <img src="img/guide3.png" alt="説明3" style="width: 100%; border-radius: 8px; border: 1px solid var(--border-color); object-fit: cover;">
-        <img src="img/guide4.png" alt="説明4" style="width: 100%; border-radius: 8px; border: 1px solid var(--border-color); object-fit: cover;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px;">
+        <img src="img/guide1.png" alt="使い方ガイド1" style="width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--border-color); object-fit: cover;">
+        <img src="img/guide2.png" alt="使い方ガイド2" style="width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--border-color); object-fit: cover;">
+        <img src="img/guide3.png" alt="使い方ガイド3" style="width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--border-color); object-fit: cover;">
+        <img src="img/guide4.png" alt="使い方ガイド4" style="width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--border-color); object-fit: cover;">
       </div>
 
-      <ul style="padding-left: 20px; margin-bottom: 20px; line-height: 1.8; color:var(--text-main); font-size: 0.95rem;">
-        <li>スコアはリアルタイム（約15秒間隔）で更新されます。</li>
-        <li>直近10分以内のスコア登録には「NEW」が表示されます。</li>
+      <ul style="padding-left: 20px; margin-bottom: 20px; line-height: 1.7; color:var(--text-main); font-size: 0.9rem;">
+        <li>スコアはリアルタイム（約15秒間隔）で自動更新されます。</li>
+        <li>直近10分以内の新規スコア登録には <strong style="color:#ef4444;">「NEW」</strong> が表示されます。</li>
+        <li>通信料は各自ご負担となります。</li>
       </ul>
-      <button class="tab-btn active" style="width:100%; padding: 12px;" onclick="closeInfoModal()">閉じる</button>
+      
+      <button class="tab-btn active" style="width:100%; padding: 12px; font-size: 1rem;" onclick="closeInfoModal()">閉じる</button>
     </div>
   </div>
 

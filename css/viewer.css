@@ -11,7 +11,7 @@
 body {
   margin: 0;
   padding: 0;
-  padding-bottom: 56px; /* 下部テロップバーの被り防止 */
+  padding-bottom: 60px; /* 下部テロップバーの被り防止 */
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   background-color: var(--bg-color);
   color: var(--text-main);
@@ -118,7 +118,8 @@ body {
 .ranking-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  min-height: 300px;
 }
 
 .viewer-card {
@@ -126,7 +127,7 @@ body {
   justify-content: space-between;
   align-items: center;
   background: var(--card-bg);
-  padding: 16px 20px;
+  padding: 14px 18px;
   border-radius: 14px;
   border: 1px solid var(--border-color);
   box-shadow: 0 2px 6px rgba(0,0,0,0.04);
@@ -156,7 +157,7 @@ body {
 
 .score-text {
   font-weight: 800;
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   color: var(--primary-color);
 }
 
@@ -182,10 +183,12 @@ body {
 
 .modal-content {
   background: white;
-  padding: 24px;
+  padding: 20px;
   border-radius: 16px;
   width: 100%;
-  max-width: 580px;
+  max-width: 520px;
+  max-height: 85vh;
+  overflow-y: auto;
   box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
 }
 
@@ -208,12 +211,12 @@ body {
 
 .ticker-clock {
   background: #2563eb;
-  padding: 0 20px;
+  padding: 0 16px;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   letter-spacing: 0.05em;
   white-space: nowrap;
   z-index: 2;
@@ -222,11 +225,11 @@ body {
 
 .ticker-label {
   background: #dc2626;
-  padding: 0 14px;
+  padding: 0 12px;
   height: 100%;
   display: flex;
   align-items: center;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   white-space: nowrap;
   z-index: 2;
 }
@@ -242,7 +245,7 @@ body {
   display: inline-block;
   padding-left: 100%;
   animation: ticker-scroll 25s linear infinite;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   color: #f8fafc;
 }
 
