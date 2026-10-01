@@ -12,6 +12,20 @@
   --shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.1);
 }
 
+/* --- 誤操作・タッチ・選択禁止設定 --- */
+html, body {
+  touch-action: none;              /* タッチによる拡大・縮小・スクロールを完全に禁止 */
+  user-select: none;               /* テキスト選択の禁止 */
+  -webkit-user-select: none;       /* Chrome / Safari 用 */
+  -ms-user-select: none;          /* Edge 用 */
+  -webkit-touch-callout: none;     /* 長押しメニューの非表示 */
+}
+
+img, a {
+  -webkit-user-drag: none;         /* 画像・リンクのドラッグ操作を禁止 */
+  user-drag: none;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
