@@ -341,7 +341,7 @@ function renderCurrentPage() {
           <span class="rank-badge">${rank}</span>
           <span style="font-weight:800; font-size:1.15rem;">${crown}${escapeHtml(item.nickname || item.name)}${newBadge}</span>
         </div>
-        <span class="score-text">${Number(item.score || 0).toLocaleString()} <span style="font-size:0.9rem;">点</span></span>
+        <span class="score-text">${Number(item.score || 0).toLocaleString()} <span style="font-size:0.9rem;">問</span></span>
       </div>
     `;
   }).join('');
