@@ -1,18 +1,19 @@
 {
-  "name": "リアルタイムランキング",
-  "short_name": "ランキング",
-  "start_url": "/monitor/index.html",
+  "name": "TopScore LIVE",
+  "short_name": "TopScore",
+  "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "background_color": "#f8fafc",
+  "theme_color": "#2563eb",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "https://via.placeholder.com/192x192/2563eb/ffffff?text=RANK",
+      "src": "img/icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "https://via.placeholder.com/512x512/2563eb/ffffff?text=RANK",
+      "src": "img/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
