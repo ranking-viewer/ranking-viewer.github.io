@@ -3,74 +3,84 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ログイン - イベントシステム</title>
-  <link rel="stylesheet" href="/css/common.css">
-  <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#2563eb">
+  <title>司会者用 点数入力画面</title>
+  <link rel="stylesheet" href="css/common.css">
+  <style>
+    body { padding: 20px; font-family: sans-serif; background: #f8fafc; }
+    .card { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto; }
+    h2 { text-align: center; margin-bottom: 20px; color: #1e3a8a; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-weight: bold; margin-bottom: 6px; font-size: 0.9rem; }
+    input, select { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
+    button { width: 100%; padding: 14px; background: #2563eb; color: white; border: none; border-radius: 12px; font-weight: bold; font-size: 1.1rem; cursor: pointer; }
+    button:disabled { background: #94a3b8; }
+    #msg { margin-top: 15px; text-align: center; font-weight: bold; }
+  </style>
 </head>
 <body>
-  <div class="container" style="max-width: 420px; margin-top: 60px;">
-    <div style="background: var(--bg-card); padding: 32px; border-radius: var(--radius); border: 1px solid var(--border); text-align: center;">
-      <h2 style="margin-bottom: 24px; font-weight:800;">EVENT ACCESS</h2>
-      
-      <!-- 一般閲覧・参加者用ログイン -->
-      <div id="user-login-section">
-        <input type="text" id="account-id-input" class="input-field" placeholder="アカウントID (学内ID / 受付番号)" required>
-        <input type="text" id="key-input" class="input-field" placeholder="ワンタイムキーを入力" required>
-        <button class="btn" style="width: 100%;" onclick="onKeyLogin()">閲覧・入力画面へ</button>
-      </div>
 
-      <hr style="margin: 28px 0; border: none; border-top: 1px solid var(--border);">
-
-      <!-- 管理者ログイン -->
-      <details>
-        <summary style="color: var(--text-sub); cursor: pointer; font-size:0.9rem;">管理者アクセス</summary>
-        <div style="margin-top: 16px;">
-          <input type="password" id="admin-pw" class="input-field" placeholder="管理者パスワード">
-          <button class="btn" style="width: 100%; background: #475569;" onclick="onAdminLogin()">管理者ログイン</button>
-        </div>
-      </details>
+<div class="card">
+  <h2>🏆 点数登録 (司会用)</h2>
+  <form id="scoreForm">
+    <div class="form-group">
+      <label for="day">日程</label>
+      <select id="day">
+        <option value="day1">1日目</option>
+        <option value="day2">2日目</option>
+      </select>
     </div>
-  </div>
+    <div class="form-group">
+      <label for="nickname">ニックネーム / チーム名</label>
+      <input type="text" id="nickname" required placeholder="例: たろう">
+    </div>
+    <div class="form-group">
+      <label for="score">獲得点数（点）</label>
+      <input type="number" id="score" inputmode="numeric" required placeholder="例: 85">
+    </div>
+    <button type="submit" id="submitBtn">送信する</button>
+  </form>
+  <div id="msg"></div>
+</div>
 
-  <script src="/js/config.js"></script>
-  <script src="/js/auth.js"></script>
-  <script>
-    async function onKeyLogin() {
-      const accountId = document.getElementById('account-id-input').value.trim();
-      const key = document.getElementById('key-input').value.trim();
+<script src="js/config.js"></script>
+<script>
+  document.getElementById('scoreForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    const msg = document.getElementById('msg');
+    
+    const day = document.getElementById('day').value;
+    const nickname = document.getElementById('nickname').value.trim();
+    const score = document.getElementById('score').value;
 
-      if (!accountId) {
-        alert('アカウントIDを入力してください');
-        return;
-      }
-      if (!key) {
-        alert('ワンタイムキーを入力してください');
-        return;
-      }
+    btn.disabled = true;
+    msg.style.color = '#64748b';
+    msg.textContent = '送信中...';
 
-      // アカウントIDをセッションに一時保存
-      sessionStorage.setItem('account_id', accountId);
+    try {
+      const response = await fetch(CONFIG.GAS_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ day, nickname, score: Number(score) })
+      });
 
-      // ワンタイムキーの検証処理
-      const success = await Auth.verifyOneTimeKey(key);
-      if (success) {
-        window.location.href = '/viewer/index.html';
+      const resData = await response.json();
+      if (resData.status === 'success' || response.ok) {
+        msg.style.color = '#16a34a';
+        msg.textContent = '✅ 登録完了しました！';
+        document.getElementById('nickname').value = '';
+        document.getElementById('score').value = '';
+        document.getElementById('nickname').focus(); // 次の入力のためにフォーカスセット
       } else {
-        alert('ワンタイムキーが正しくありません');
+        throw new Error('送信エラー');
       }
+    } catch (err) {
+      msg.style.color = '#dc2626';
+      msg.textContent = '❌ 送信に失敗しました';
+    } finally {
+      btn.disabled = false;
     }
-
-    async function onAdminLogin() {
-      const pw = document.getElementById('admin-pw').value;
-      if (!pw) return alert('パスワードを入力してください');
-      const success = await Auth.loginAdmin(pw);
-      if (success) {
-        window.location.href = '/admin/index.html';
-      } else {
-        alert('パスワードが間違っています');
-      }
-    }
-  </script>
+  });
+</script>
 </body>
 </html>

@@ -147,36 +147,6 @@ function openInfoModal() {
 function closeInfoModal() {
   document.getElementById('info-modal').style.display = 'none';
 }
-function openInputModal() {
-  const savedPw = localStorage.getItem('app_common_pw');
-  const pwInput = document.getElementById('modal-common-pw');
-  if (savedPw && pwInput) {
-    pwInput.value = savedPw;
-  }
-  document.getElementById('input-modal').style.display = 'flex';
-  toggleMenu();
-}
-function closeInputModal() {
-  document.getElementById('input-modal').style.display = 'none';
-}
-
-// スコア入力フォーム起動
-function submitInputForm() {
-  const accountIdInput = document.getElementById('modal-account-id');
-  const passwordInput = document.getElementById('modal-common-pw');
-
-  const accountId = accountIdInput ? accountIdInput.value.trim() : '';
-  const password = passwordInput ? passwordInput.value.trim() : '';
-
-  if (!accountId) return alert('アカウントIDを入力してください');
-  if (password !== COMMON_INPUT_PASSWORD) return alert('共通パスワードが正しくありません');
-  if (typeof CONFIG === 'undefined' || !CONFIG.GOOGLE_FORM_BASE_URL) return alert('CONFIG または フォームURLが未設定です');
-
-  localStorage.setItem('app_common_pw', password);
-  closeInputModal();
-  const formUrl = `${CONFIG.GOOGLE_FORM_BASE_URL}${encodeURIComponent(accountId)}`;
-  window.open(formUrl, '_blank');
-}
 
 // データ取得処理（必要に応じて複数データを取得）
 async function fetchViewerData(category, resetPage = true) {
@@ -195,7 +165,6 @@ async function fetchViewerData(category, resetPage = true) {
     }
 
     if (category === 'day2') {
-      // 2日目タブの場合は day2 と total の両方を並行取得
       const [resDay2, resTotal] = await Promise.all([
         fetch(`${CONFIG.GAS_API_URL}?day=day2`),
         fetch(`${CONFIG.GAS_API_URL}?day=total`)
@@ -207,7 +176,6 @@ async function fetchViewerData(category, resetPage = true) {
       day2DataCache = dataDay2.ranking || [];
       totalDataCache = dataTotal.ranking || [];
     } else {
-      // day1 または total の場合は単一取得
       const res = await fetch(`${CONFIG.GAS_API_URL}?day=${category}`);
       const data = await res.json();
       if (category === 'day1') day1DataCache = data.ranking || [];
@@ -221,7 +189,7 @@ async function fetchViewerData(category, resetPage = true) {
   }
 }
 
-// レンダリング（自動ローテーション & モード表示対応）
+// レンダリング（点表示に修正済み）
 function renderCurrentPage() {
   const container = document.getElementById('viewer-ranking');
   if (!container) return;
@@ -245,7 +213,6 @@ function renderCurrentPage() {
   const startIndex = currentPage * pageSize;
   const pageItems = currentData.slice(startIndex, startIndex + pageSize);
 
-  // ヘッダー（モードラベル ＆ ページ情報）
   let headerHtml = `
     <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.9rem; font-weight:800; color:var(--text-sub); margin-bottom:10px; padding:0 4px;">
       <span>${currentLabel}</span>
@@ -268,7 +235,7 @@ function renderCurrentPage() {
           <span class="rank-badge">${rank}</span>
           <span style="font-weight:800; font-size:1.15rem;">${crown}${escapeHtml(item.nickname)}</span>
         </div>
-        <span class="score-text">${Number(item.score).toLocaleString()} <span style="font-size:0.9rem;">pt</span></span>
+        <span class="score-text">${Number(item.score).toLocaleString()} <span style="font-size:0.9rem;">点</span></span>
       </div>
     `;
   }).join('');
