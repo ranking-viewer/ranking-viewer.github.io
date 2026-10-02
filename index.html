@@ -2,121 +2,236 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>TopScore LIVE</title>
-  <link rel="stylesheet" href="css/common.css">
-  <link rel="stylesheet" href="css/viewer.css">
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#2563eb">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TopScore LIVE スクリーン</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #0f172a;
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 上部お知らせバー */
+    .ticker-bar {
+      display: flex;
+      align-items: center;
+      height: 48px;
+      background: #1e293b;
+      border-bottom: 2px solid #38bdf8;
+      overflow: hidden;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .ticker-clock {
+      background: #2563eb;
+      padding: 0 16px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      font-size: 1.15rem;
+      white-space: nowrap;
+    }
+    .ticker-label {
+      background: #dc2626;
+      padding: 0 12px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+      font-weight: 700;
+    }
+    .ticker-content-wrapper { flex: 1; overflow: hidden; white-space: nowrap; }
+    .ticker-content { display: inline-block; padding-left: 100%; animation: ticker-scroll 25s linear infinite; }
+    @keyframes ticker-scroll {
+      0% { transform: translate3d(0, 0, 0); }
+      100% { transform: translate3d(-100%, 0, 0); }
+    }
+
+    .main-container {
+      display: flex;
+      flex: 1;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    .ranking-section {
+      flex: 3;
+      background: #1e293b;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+    .ranking-title { font-size: 1.6rem; font-weight: 900; margin-bottom: 16px; color: #f8fafc; }
+    .ranking-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .ranking-item {
+      display: flex;
+      align-items: center;
+      background: #334155;
+      padding: 14px 22px;
+      border-radius: 12px;
+      font-size: 1.4rem;
+      font-weight: bold;
+    }
+    .rank-badge {
+      width: 70px;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 900;
+      margin-right: 20px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: #475569;
+    }
+    .rank-1 .rank-badge { background: #eab308; color: #0f172a; }
+    .rank-2 .rank-badge { background: #94a3b8; color: #0f172a; }
+    .rank-3 .rank-badge { background: #b45309; color: #ffffff; }
+    .player-name { flex: 1; }
+    .player-score { font-size: 1.8rem; color: #38bdf8; }
+
+    .qr-section {
+      flex: 1;
+      background: #1e293b;
+      border-radius: 16px;
+      padding: 30px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      border: 1px solid #334155;
+    }
+    .qr-title { font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; }
+    .qr-sub { font-size: 1rem; color: #94a3b8; margin-bottom: 20px; }
+    .qr-card { background: #ffffff; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    .qr-card img { width: 200px; height: 200px; display: block; }
+    .last-update { margin-top: 16px; font-size: 0.9rem; color: #64748b; }
+
+    @media (max-width: 900px) {
+      .main-container { flex-direction: column; }
+    }
+  </style>
 </head>
 <body>
 
-  <div class="app-container">
-    <!-- ヘッダー -->
-    <header class="header-bar">
-      <h1 class="site-title">🏆 TopScore LIVE</h1>
-      
-      <!-- ハンバーガーメニューボタン -->
-      <button class="menu-btn" onclick="toggleMenu()" aria-label="メニューを開く">🍔</button>
-
-      <!-- ドロップダウンメニュー（一般閲覧用） -->
-      <nav id="nav-menu" class="nav-menu">
-        <button class="nav-item" onclick="openInfoModal(); closeMenu();">💡 アプリの仕組み・使い方</button>
-        <button class="nav-item" onclick="toggleFullScreen(); closeMenu();">🖥️ 全画面表示（モニター用）</button>
-        <button class="nav-item" onclick="location.reload();">🔄 手動更新</button>
-        <button class="nav-item" onclick="location.href='control.html';">🎛️ コントロール（スタッフ用）</button>
-      </nav>
-    </header>
-
-    <!-- カテゴリ切り替えタブ -->
-    <div class="category-nav">
-      <button class="tab-btn" onclick="switchCategory('day1', this)">1日目</button>
-      <button class="tab-btn" onclick="switchCategory('day2', this)">2日目</button>
-      <button class="tab-btn active" onclick="switchCategory('total', this)">2日合計</button>
-    </div>
-
-    <!-- 検索・件数（お客さん向けの最小限の操作） -->
-    <div class="toolbar">
-      <input id="search-input" class="toolbar-input" type="text" placeholder="🔍 ニックネーム検索">
-      <select id="count-select" class="toolbar-select">
-        <option value="10">上位10位</option>
-        <option value="20">上位20位</option>
-        <option value="all">全件</option>
-      </select>
-    </div>
-
-    <div id="status-line" class="status-line">
-      <span id="last-updated">最終更新: --</span>
-      <span id="next-refresh"></span>
-    </div>
-    <div id="offline-banner" class="offline-banner" style="display:none;">⚠️ 通信エラーのためキャッシュを表示しています</div>
-    <div id="freeze-banner" class="freeze-banner" style="display:none;">🔒 更新を停止しています（凍結モード）</div>
-
-    <!-- ランキング一覧表示領域 ＆ QRコード（左右配置） -->
-    <div class="content-layout">
-      <main id="viewer-ranking" class="ranking-list">
-        <!-- JavaScriptで自動生成されます -->
-      </main>
-
-      <!-- 右側：QRコードエリア -->
-      <aside class="qr-section">
-        <div class="qr-title">📱 ランキングはこちら</div>
-        <div class="qr-sub" id="qr-caption">スマートフォンでスキャン</div>
-        <div class="qr-card">
-          <img id="qr-code" src="" alt="QRコード">
-        </div>
-      </aside>
-    </div>
-
-    <!-- フッター -->
-    <footer style="text-align: center; margin-top: 20px; padding: 12px; font-size: 0.85rem; color: var(--text-sub);">
-      <p style="margin-top: 4px;">System Developed by <strong>有志ITスタッフ</strong></p>
-    </footer>
-  </div>
-
-  <!-- モーダル: アプリの仕組み・使い方 -->
-  <div id="info-modal" class="modal-overlay" onclick="closeInfoModal()">
-    <div class="modal-content" onclick="event.stopPropagation()">
-      <h2 style="margin-bottom: 16px; font-weight:800; font-size: 1.3rem; color: var(--text-main);">💡 アプリの仕組み・使い方</h2>
-      <p style="font-size: 0.8rem; color: var(--text-sub); margin-bottom: 8px;">※画像タップで拡大表示できます</p>
-      
-      <!-- 画像4枚レイアウト（クリックで拡大表示） -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px;">
-        <img src="img/guide1.png" alt="使い方ガイド1" class="guide-img" onclick="openImageModal(this.src)">
-        <img src="img/guide2.png" alt="使い方ガイド2" class="guide-img" onclick="openImageModal(this.src)">
-        <img src="img/guide3.png" alt="使い方ガイド3" class="guide-img" onclick="openImageModal(this.src)">
-        <img src="img/guide4.png" alt="使い方ガイド4" class="guide-img" onclick="openImageModal(this.src)">
-      </div>
-
-      <ul style="padding-left: 20px; margin-bottom: 20px; line-height: 1.7; color:var(--text-main); font-size: 0.9rem;">
-        <li>スコアはリアルタイム（約15秒間隔）で自動更新されます。</li>
-        <li>通信料は各自ご負担となります。</li>
-      </ul>
-      
-      <button class="tab-btn active" style="width:100%; padding: 12px; font-size: 1rem;" onclick="closeInfoModal()">閉じる</button>
-    </div>
-  </div>
-
-  <!-- 画像拡大プレビュー用モーダル -->
-  <div id="image-modal" class="image-modal-overlay" onclick="closeImageModal()">
-    <div class="image-modal-container" onclick="event.stopPropagation()">
-      <button class="image-modal-close" onclick="closeImageModal()" aria-label="閉じる">×</button>
-      <img id="enlarged-image" src="" alt="拡大画像">
-    </div>
-  </div>
-
-  <!-- 下部テロップ・時刻バー -->
+  <!-- 上部お知らせバー -->
   <div class="ticker-bar">
     <div class="ticker-clock" id="live-clock">00:00:00</div>
     <div class="ticker-label">📢 お知らせ</div>
     <div class="ticker-content-wrapper">
       <div class="ticker-content">
-        <span>【文化祭ランキング】リアルタイム更新中！ ｜ ⚠️ モニターには触れないでください ｜ 🏆 スコア登録は司会・スタッフまで！</span>
+        <span>【文化祭ランキング】リアルタイム更新中！ ｜ ⚠️ モニターには触れないでください ｜ 🏆 スコア登録は司会・スタッフまで！ ｜ 📱 詳細は右のQRコードから！</span>
       </div>
     </div>
   </div>
 
+  <div class="main-container">
+    <!-- ランキング表示部 -->
+    <section class="ranking-section">
+      <div class="ranking-title" id="ranking-title">🏆 ランキング</div>
+      <ul class="ranking-list" id="ranking-list">
+        <li class="ranking-item">データ読込中...</li>
+      </ul>
+      <div class="last-update" id="update-time">最終更新: --</div>
+    </section>
+
+    <!-- 右側：詳細ページQR -->
+    <section class="qr-section">
+      <div class="qr-title">📱 詳細はこちら</div>
+      <div class="qr-sub">スマートフォンでスキャン</div>
+      <div class="qr-card">
+        <img id="qr-code" src="" alt="QRコード">
+      </div>
+    </section>
+  </div>
+
   <script src="js/config.js"></script>
-  <script src="js/viewer.js"></script>
+  <script>
+    // 当日判定（2026/10/03以降は2日目）
+    function detectTodayDay() {
+      return new Date() >= new Date('2026-10-03T00:00:00+09:00') ? 'day2' : 'day1';
+    }
+
+    function updateClock() {
+      const el = document.getElementById('live-clock');
+      const n = new Date();
+      el.textContent = [n.getHours(), n.getMinutes(), n.getSeconds()]
+        .map(v => String(v).padStart(2, '0')).join(':');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      // QRコードは detail.html（詳細ページ）へのリンク
+      const base = window.location.origin + window.location.pathname.replace(/index\.html$/, '');
+      document.getElementById('qr-code').src =
+        `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(base + 'detail.html')}`;
+
+      document.getElementById('ranking-title').textContent =
+        detectTodayDay() === 'day1' ? '🏆 1日目 ランキング' : '🏆 2日目 ランキング';
+
+      fetchRankingData();
+      setInterval(() => { if (!freezeOn()) fetchRankingData(); }, (window.CONFIG && CONFIG.AUTO_REFRESH_INTERVAL) || 15000);
+      updateClock();
+      setInterval(updateClock, 1000);
+    });
+
+    function freezeOn() {
+      try { return localStorage.getItem('topscore_freeze') === '1'; } catch (e) { return false; }
+    }
+
+    async function fetchRankingData() {
+      try {
+        const res = await fetch(`${CONFIG.GAS_API_URL}?day=${detectTodayDay()}`);
+        const data = await res.json();
+        const list = Array.isArray(data) ? data
+          : (data && Array.isArray(data.ranking)) ? data.ranking : [];
+        renderRanking(calculateTiedRanks(list));
+        document.getElementById('update-time').textContent =
+          '最終更新: ' + new Date().toLocaleTimeString();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function calculateTiedRanks(data) {
+      const sorted = [...data].sort((a, b) => Number(b.score) - Number(a.score));
+      let currentRank = 1;
+      return sorted.map((item, index, arr) => {
+        if (index > 0 && Number(item.score) < Number(arr[index - 1].score)) {
+          currentRank = index + 1;
+        }
+        return { ...item, rank: currentRank };
+      });
+    }
+
+    function renderRanking(data) {
+      const listEl = document.getElementById('ranking-list');
+      listEl.innerHTML = '';
+      if (!data || data.length === 0) {
+        listEl.innerHTML = '<li class="ranking-item">現在データはありません</li>';
+        return;
+      }
+      data.forEach(item => {
+        const li = document.createElement('li');
+        li.className = `ranking-item rank-${item.rank}`;
+        li.innerHTML = `
+          <div class="rank-badge">${item.rank}位</div>
+          <div class="player-name">${escapeHtml(item.nickname || item.name)}</div>
+          <div class="player-score">${Number(item.score).toLocaleString()} pt</div>
+        `;
+        listEl.appendChild(li);
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str || '').replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[m]));
+    }
+  </script>
 </body>
 </html>

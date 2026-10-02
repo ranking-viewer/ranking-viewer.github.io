@@ -1,7 +1,9 @@
-const CACHE_NAME = 'topscore-live-v1';
+const CACHE_NAME = 'topscore-live-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
+  './detail.html',
+  './control.html',
   './404.html',
   './css/common.css',
   './css/viewer.css',
@@ -46,6 +48,14 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   // GAS APIへのリクエストはキャッシュせず常にネットワークへ
   if (event.request.url.includes('script.google.com')) {
+    return;
+  }
+
+  // HTMLファイルは常にネットワーク優先（更新が反映されやすくする）
+  if (event.request.mode === 'navigate' || event.request.url.endsWith('.html')) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request))
+    );
     return;
   }
 

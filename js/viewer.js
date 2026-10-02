@@ -1,5 +1,16 @@
 // --- 状態管理・グローバル変数 ---
-let currentTab = 'total';
+// 当日が1日目か2日目かを自動判定（2026/10/03 0:00 JST以降は2日目）
+function detectTodayDay() {
+  try {
+    const now = new Date();
+    const start = new Date('2026-10-03T00:00:00+09:00');
+    return now >= start ? 'day2' : 'day1';
+  } catch (e) {
+    return 'day2';
+  }
+}
+
+let currentTab = detectTodayDay();
 
 // データキャッシュ（メモリ上）
 let day1DataCache = [];
@@ -104,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setInterval(updateNextRefreshLabel, 1000);
 
   // 最新データを取得
-  fetchViewerData('total');
+  fetchViewerData(currentTab);
 
   // 6秒ローテーションタイマー起動
   startPageRotation();
@@ -131,49 +142,27 @@ function startPageRotation() {
   
   autoPageTimer = setInterval(() => {
     if (freezeMode) return;
-    const isAfter12 = isAfterJst12PM();
-
-    if (currentTab === 'day2' && !isAfter12) {
-      day2ToggleState = (day2ToggleState === 'day2') ? 'total' : 'day2';
-      currentPage = 0;
-      renderCurrentPage();
-    } else {
-      const currentData = getCurrentTargetData();
-      const subPerPage = 3; // 4位以下の小表示は1ページ3件
-      if (currentData.length > 3) {
-        const remainingCount = currentData.length - 3;
-        const maxSubPages = Math.ceil(remainingCount / subPerPage);
-        if (maxSubPages > 1) {
-          currentPage = (currentPage + 1) % maxSubPages;
-          renderCurrentPage();
-        }
+    const currentData = getCurrentTargetData();
+    const subPerPage = 3; // 4位以下の小表示は1ページ3件
+    if (currentData.length > 3) {
+      const remainingCount = currentData.length - 3;
+      const maxSubPages = Math.ceil(remainingCount / subPerPage);
+      if (maxSubPages > 1) {
+        currentPage = (currentPage + 1) % maxSubPages;
+        renderCurrentPage();
       }
     }
   }, PAGE_ROTATE_INTERVAL);
 }
 
-// 現在のタブ・状況に応じたデータ配列を取得
+// 現在の日付に応じたデータ配列を取得（1日目は1日目の結果、2日目は2日目の結果）
 function getCurrentTargetData() {
-  if (currentTab === 'day1') return day1DataCache;
-  if (currentTab === 'total') return totalDataCache;
-
-  if (isAfterJst12PM()) {
-    return totalDataCache;
-  } else {
-    return day2ToggleState === 'day2' ? day2DataCache : totalDataCache;
-  }
+  return detectTodayDay() === 'day1' ? day1DataCache : day2DataCache;
 }
 
 // 現在の表示タイトルラベルを取得
 function getCurrentLabel() {
-  if (currentTab === 'day1') return '【 1日目 ランキング 】';
-  if (currentTab === 'total') return '【 2日合計 ランキング 】';
-
-  if (isAfterJst12PM()) {
-    return '【 2日合計 ランキング (12時以降) 】';
-  } else {
-    return day2ToggleState === 'day2' ? '【 2日目 ランキング 】' : '【 2日合計 ランキング 】';
-  }
+  return detectTodayDay() === 'day1' ? '【 1日目 ランキング 】' : '【 2日目 ランキング 】';
 }
 
 // ハンバーガーメニュー開閉
