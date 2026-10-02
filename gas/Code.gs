@@ -125,6 +125,26 @@ function doPost(e) {
       }
     }
 
+    // スコア登録（司会用入力フォームからの送信）
+    if (contents.nickname !== undefined && contents.score !== undefined) {
+      const nickname = String(contents.nickname).trim();
+      const score = Number(contents.score);
+      if (!nickname || isNaN(score)) {
+        return createJsonResponse({ status: 'error', message: 'Invalid input' });
+      }
+      const eventDay = contents.day === 'day2' ? '2' : '1';
+      sheet.appendRow([
+        new Date(),      // A: timestamp
+        nickname,        // B: account_id（同名なら合算される）
+        nickname,        // C: nickname
+        score,           // D: score
+        eventDay,        // E: event_day
+        1,               // F: is_visible
+        1                // G: is_new
+      ]);
+      return createJsonResponse({ status: 'success' });
+    }
+
     return createJsonResponse({ status: 'error', message: 'Unknown Action' });
   } finally {
     lock.releaseLock();

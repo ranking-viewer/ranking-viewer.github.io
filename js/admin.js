@@ -79,6 +79,12 @@ async function handleScoreSubmit(e) {
       body: JSON.stringify(payload)
     });
 
+    const result = await response.json().catch(() => ({}));
+
+    if (result && result.status === 'error') {
+      throw new Error(result.message || 'サーバーエラー');
+    }
+
     statusEl.className = 'status-msg success';
     statusEl.textContent = '🎉 スコアが正常に反映されました！';
     statusEl.style.display = 'block';
