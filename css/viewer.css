@@ -640,6 +640,15 @@ body.monitor-large .site-title { font-size: 2.4rem; }
     position: static;
     width: 100%;
   }
+  .nav-menu {
+    width: 100%;
+    left: 0;
+    right: 0;
+  }
+  .nav-item {
+    padding: 16px;
+    font-size: 1rem;
+  }
   .sub-rank-grid {
     grid-template-columns: 1fr;
   }

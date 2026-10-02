@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
    const interval = (typeof CONFIG !== 'undefined' && CONFIG.AUTO_REFRESH_INTERVAL) || 15000;
    setInterval(() => {
-     if (freezeMode) return;
+     if (freezeMode || document.hidden) return;
      fetchViewerData(currentTab, false);
    }, interval);
 
@@ -182,6 +182,11 @@ function toggleMenu() {
   if (nav) nav.classList.toggle('active');
 }
 
+function closeMenu() {
+  const nav = document.getElementById('nav-menu');
+  if (nav) nav.classList.remove('active');
+}
+
 // フルスクリーン切り替え
 function toggleFullScreen() {
   if (!document.fullscreenElement) {
@@ -239,6 +244,14 @@ function closeImageModal() {
   }
 }
 
+// タイムアウト付きfetch（通信が遅い・繋がらない場合に備える）
+function fetchWithTimeout(url, timeoutMs) {
+  return Promise.race([
+    fetch(url),
+    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs))
+  ]);
+}
+
 // レスポンスデータから配列を抽出する関数
 function extractRankingArray(data) {
   if (Array.isArray(data)) return data;
@@ -265,8 +278,8 @@ async function fetchViewerData(category, resetPage = true) {
 
     if (category === 'day2') {
       const [resDay2, resTotal] = await Promise.all([
-        fetch(`${CONFIG.GAS_API_URL}?day=day2`),
-        fetch(`${CONFIG.GAS_API_URL}?day=total`)
+        fetchWithTimeout(`${CONFIG.GAS_API_URL}?day=day2`, 10000),
+        fetchWithTimeout(`${CONFIG.GAS_API_URL}?day=total`, 10000)
       ]);
 
       const dataDay2 = await resDay2.json();
@@ -278,7 +291,7 @@ async function fetchViewerData(category, resetPage = true) {
       saveLocalCache('day2', day2DataCache);
       saveLocalCache('total', totalDataCache);
     } else {
-      const res = await fetch(`${CONFIG.GAS_API_URL}?day=${category}`);
+      const res = await fetchWithTimeout(`${CONFIG.GAS_API_URL}?day=${category}`, 10000);
       const data = await res.json();
       const list = extractRankingArray(data);
       
@@ -500,49 +513,43 @@ function initToolbar() {
   });
 
   const freezeBtn = document.getElementById('freeze-btn');
-  if (freezeBtn) freezeBtn.addEventListener('click', () => {
-    freezeMode = !freezeMode;
-    freezeBtn.textContent = freezeMode ? '🔥 更新再開' : '🧊 更新停止';
+  if (!freezeBtn && !document.getElementById('podium-btn')) {
+    // ボタンが無い（お客さん向け index）場合は設定の同期で制御
+  }
+
+  // コントロールページからの設定を読み込み・反映
+  loadStoredSettings();
+  setInterval(syncFromStorage, 1000);
+}
+
+// コントロールページ（control.html）で設定された表示モードを反映
+function loadStoredSettings() {
+  try {
+    freezeMode = localStorage.getItem('topscore_freeze') === '1';
+    podiumMode = localStorage.getItem('topscore_podium') === '1';
+    qrTargetViewer = localStorage.getItem('topscore_qr') !== 'form';
+    const large = localStorage.getItem('topscore_large') === '1';
+    document.body.classList.toggle('monitor-large', large);
+    const theme = localStorage.getItem('topscore_theme') || '';
+    document.body.classList.remove('theme-festa', 'theme-dark');
+    if (theme) document.body.classList.add(theme);
     const fb = document.getElementById('freeze-banner');
     if (fb) fb.style.display = freezeMode ? 'block' : 'none';
     const fr = document.getElementById('viewer-ranking');
     if (fr) fr.classList.toggle('frozen', freezeMode);
-  });
-
-  const podiumBtn = document.getElementById('podium-btn');
-  if (podiumBtn) podiumBtn.addEventListener('click', () => {
-    podiumMode = !podiumMode;
-    podiumBtn.classList.toggle('active', podiumMode);
-    currentPage = 0;
-    renderCurrentPage();
-  });
-
-  const largeBtn = document.getElementById('large-btn');
-  if (largeBtn) largeBtn.addEventListener('click', () => {
-    document.body.classList.toggle('monitor-large');
-    largeBtn.classList.toggle('active');
-  });
-
-  const themeBtn = document.getElementById('theme-btn');
-  if (themeBtn) themeBtn.addEventListener('click', () => {
-    if (THEMES[themeIdx]) document.body.classList.remove(THEMES[themeIdx]);
-    themeIdx = (themeIdx + 1) % THEMES.length;
-    if (THEMES[themeIdx]) document.body.classList.add(THEMES[themeIdx]);
-  });
-
-  const qrBtn = document.getElementById('qr-toggle-btn');
-  if (qrBtn) qrBtn.addEventListener('click', () => {
-    qrTargetViewer = !qrTargetViewer;
     setupQRCode();
-  });
+  } catch (e) { console.error(e); }
+}
 
-  const bgmBtn = document.getElementById('bgm-btn');
-  if (bgmBtn) bgmBtn.addEventListener('click', () => {
-    if (bgmOn) stopBGM(); else startBGM();
-  });
-
-  const csvBtn = document.getElementById('csv-btn');
-  if (csvBtn) csvBtn.addEventListener('click', exportCSV);
+let lastSettingsString = '';
+function syncFromStorage() {
+  const s = ['topscore_freeze','topscore_podium','topscore_qr','topscore_large','topscore_theme']
+    .map(k => localStorage.getItem(k)).join('|');
+  if (s !== lastSettingsString) {
+    lastSettingsString = s;
+    loadStoredSettings();
+    renderCurrentPage();
+  }
 }
 
 // QRコード生成（表示対象を切り替え可能）
@@ -586,7 +593,7 @@ function exportCSV() {
 // --- BGM（無料・外部ファイル不要の WebAudio 生成音） ---
 // ブラウザの自動再生制限対策として、最初のクリック/タッチで小さく再生開始
 document.addEventListener('pointerdown', function startOnFirstTouch() {
-  if (!bgmOn) startBGM();
+  if (!bgmOn && localStorage.getItem('topscore_bgm') !== 'off') startBGM();
   document.removeEventListener('pointerdown', startOnFirstTouch);
 });
 

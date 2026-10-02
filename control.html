@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TopScore LIVE コントロール</title>
+  <style>
+    body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: #f1f5f9; margin: 0; padding: 20px; color: #1e293b; }
+    h1 { font-size: 1.4rem; margin-bottom: 4px; }
+    .note { font-size: 0.85rem; color: #64748b; margin-bottom: 20px; }
+    .group { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    .group h2 { font-size: 1rem; margin: 0 0 12px; }
+    button { display: block; width: 100%; padding: 14px; margin-bottom: 8px; border: 2px solid #e2e8f0; border-radius: 10px; background: #fff; font-weight: 800; font-size: 1rem; cursor: pointer; }
+    button.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+    a.back { display: inline-block; margin-top: 8px; color: #2563eb; font-weight: 700; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <h1>🎛️ コントロール</h1>
+  <p class="note">※このページで変更した設定は、同じ端末・ブラウザで開いている index.html に自動反映されます。</p>
+
+  <div class="group">
+    <h2>表示モード</h2>
+    <button id="freeze">🧊 更新停止（凍結モード）</button>
+    <button id="podium">🏅 表彰台モード</button>
+    <button id="large">🔍 大型表示（モニター向け）</button>
+  </div>
+
+  <div class="group">
+    <h2>見た目</h2>
+    <button id="theme">🎨 テーマ切替</button>
+  </div>
+
+  <div class="group">
+    <h2>QRコード</h2>
+    <button id="qr">📱 QR切替（閲覧 / 登録フォーム）</button>
+  </div>
+
+  <div class="group">
+    <h2>その他</h2>
+    <button id="bgm">🎵 BGM 切替</button>
+    <button id="csv">💾 CSV出力</button>
+  </div>
+
+  <a class="back" href="index.html">← 閲覧ページへ戻る</a>
+
+  <script src="js/config.js"></script>
+  <script>
+    const $ = id => document.getElementById(id);
+    const get = k => localStorage.getItem(k);
+    const set = (k, v) => localStorage.setItem(k, v);
+    const THEMES = ['', 'theme-festa', 'theme-dark'];
+    let themeIdx = THEMES.indexOf(get('topscore_theme') || '');
+
+    function reflect() {
+      $('freeze').classList.toggle('active', get('topscore_freeze') === '1');
+      $('podium').classList.toggle('active', get('topscore_podium') === '1');
+      $('large').classList.toggle('active', get('topscore_large') === '1');
+      $('qr').textContent = get('topscore_qr') === 'form' ? '📱 QR：登録フォーム（タップで閲覧に）' : '📱 QR：閲覧ページ（タップでフォームに）';
+      $('bgm').textContent = get('topscore_bgm') === 'off' ? '🎵 BGM：OFF（タップでON）' : '🎵 BGM：ON（タップでOFF）';
+    }
+
+    $('freeze').onclick = () => { set('topscore_freeze', get('topscore_freeze') === '1' ? '0' : '1'); reflect(); };
+    $('podium').onclick = () => { set('topscore_podium', get('topscore_podium') === '1' ? '0' : '1'); reflect(); };
+    $('large').onclick = () => { set('topscore_large', get('topscore_large') === '1' ? '0' : '1'); reflect(); };
+    $('theme').onclick = () => {
+      themeIdx = (themeIdx + 1) % THEMES.length;
+      set('topscore_theme', THEMES[themeIdx]);
+      reflect();
+      $('theme').textContent = '🎨 テーマ：' + (['通常', 'フェスタ', 'ダーク'][themeIdx]);
+    };
+    $('qr').onclick = () => { set('topscore_qr', get('topscore_qr') === 'form' ? 'viewer' : 'form'); reflect(); };
+    $('bgm').onclick = () => { set('topscore_bgm', get('topscore_bgm') === 'off' ? 'on' : 'off'); reflect(); };
+
+    $('csv').onclick = async () => {
+      try {
+        const res = await fetch(`${CONFIG.GAS_API_URL}?day=total`);
+        const data = await res.json();
+        const list = Array.isArray(data) ? data : (data.ranking || []);
+        const lines = ['順位,ニックネーム,スコア'];
+        let lastScore = null, lastRank = 0;
+        list.forEach((item, i) => {
+          const score = Number(item.score || 0);
+          const rank = (i > 0 && score === lastScore) ? lastRank : i + 1;
+          lastScore = score; lastRank = rank;
+          lines.push(`${rank},"${String(item.nickname || item.name || '').replace(/"/g, '""')}",${score}`);
+        });
+        const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'ranking.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
+      } catch (e) {
+        alert('CSV出力に失敗しました');
+      }
+    };
+
+    reflect();
+  </script>
+</body>
+</html>
