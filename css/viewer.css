@@ -1,4 +1,4 @@
-/* --- 全体・基本レイアウト --- */
+/* --- 基本変数・レイアウト --- */
 :root {
   --primary-color: #2563eb;
   --bg-color: #f8fafc;
@@ -19,7 +19,7 @@ body {
 }
 
 .app-container {
-  max-width: 800px;
+  max-width: 960px;
   margin: 0 auto;
   padding: 16px;
 }
@@ -35,9 +35,10 @@ body {
 
 .site-title {
   margin: 0;
-  font-size: 1.6rem;
-  font-weight: 800;
+  font-size: 1.8rem;
+  font-weight: 900;
   color: var(--primary-color);
+  letter-spacing: -0.02em;
 }
 
 .menu-btn {
@@ -114,12 +115,82 @@ body {
   border-color: var(--primary-color);
 }
 
-/* ランキングカード */
-.ranking-list {
+/* --- 再構築：ポディウム＆グリッドレイアウト --- */
+.ranking-podium-container {
   display: flex;
   flex-direction: column;
+  gap: 16px;
+  min-height: 400px;
+}
+
+/* 1位（最上部巨大特大カード） */
+.podium-rank-1 {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 3px solid #f59e0b;
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 10px 20px rgba(245, 158, 11, 0.2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.podium-rank-1 .rank-badge-large {
+  font-size: 1.8rem;
+  font-weight: 900;
+  background: #f59e0b;
+  color: #ffffff;
+  padding: 8px 18px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(245, 158, 11, 0.4);
+}
+
+.podium-rank-1 .name-large {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #78350f;
+}
+
+.podium-rank-1 .score-large {
+  font-size: 2.4rem;
+  font-weight: 900;
+  color: #d97706;
+}
+
+/* 2位・3位（横並びコンテナ） */
+.podium-sub-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.podium-rank-2 {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border: 2px solid #94a3b8;
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.podium-rank-3 {
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  border: 2px solid #ea580c;
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* 4位〜7位（4列・2列グリッド並び） */
+.podium-grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 10px;
-  min-height: 300px;
 }
 
 .viewer-card {
@@ -127,8 +198,8 @@ body {
   justify-content: space-between;
   align-items: center;
   background: var(--card-bg);
-  padding: 14px 18px;
-  border-radius: 14px;
+  padding: 12px 16px;
+  border-radius: 12px;
   border: 1px solid var(--border-color);
   box-shadow: 0 2px 6px rgba(0,0,0,0.04);
 }
@@ -137,31 +208,22 @@ body {
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: #e2e8f0;
   font-weight: 800;
-  font-size: 1.1rem;
+  font-size: 1rem;
   color: #475569;
 }
 
-.rank-1 { border: 2px solid #f59e0b; background: #fffbeeb0; }
-.rank-1 .rank-badge { background: #f59e0b; color: white; }
-
-.rank-2 { border: 2px solid #94a3b8; background: #f8fafcb0; }
-.rank-2 .rank-badge { background: #94a3b8; color: white; }
-
-.rank-3 { border: 2px solid #d97706; background: #fff7edb0; }
-.rank-3 .rank-badge { background: #b45309; color: white; }
-
 .score-text {
   font-weight: 800;
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   color: var(--primary-color);
 }
 
-/* モーダル */
+/* --- モーダル共通 --- */
 .modal-overlay {
   display: none;
   position: fixed;
@@ -262,11 +324,7 @@ body {
   justify-content: center;
 }
 
-.image-modal-close:hover {
-  background: #f1f5f9;
-}
-
-/* --- 下部テロップ・時刻バー --- */
+/* --- 下部テロップバー --- */
 .ticker-bar {
   position: fixed;
   bottom: 0;
@@ -326,4 +384,16 @@ body {
 @keyframes ticker-scroll {
   0% { transform: translate3d(0, 0, 0); }
   100% { transform: translate3d(-100%, 0, 0); }
+}
+
+@media (max-width: 640px) {
+  .podium-sub-container {
+    grid-template-columns: 1fr;
+  }
+  .podium-rank-1 .name-large {
+    font-size: 1.3rem;
+  }
+  .podium-rank-1 .score-large {
+    font-size: 1.6rem;
+  }
 }

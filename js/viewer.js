@@ -10,7 +10,7 @@ let totalDataCache = [];
 let currentPage = 0;
 let autoPageTimer = null;
 let day2ToggleState = 'day2'; // 'day2' または 'total'
-const PAGE_ROTATE_INTERVAL = 6000; // ページ切り替え間隔（6秒）
+const PAGE_ROTATE_INTERVAL = (typeof CONFIG !== 'undefined' && CONFIG.PAGE_ROTATE_INTERVAL) || 6000;
 
 // 日本時間の12時以降かどうか判定
 function isAfterJst12PM() {
@@ -36,27 +36,7 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
-// 2. 画面高さに合わせて1画面あたりの件数を自動計算
-function calculatePageSize() {
-  const container = document.getElementById('viewer-ranking');
-  if (!container) return 8;
-
-  const rect = container.getBoundingClientRect();
-  const topPos = rect.top > 0 ? rect.top : 150;
-  const availableHeight = window.innerHeight - topPos - 110;
-  const cardHeight = 82; 
-  const calculatedSize = Math.floor(availableHeight / cardHeight);
-  
-  if (isNaN(calculatedSize) || calculatedSize < 3) return 5;
-  return calculatedSize;
-}
-
-// 画面リサイズ時に再描画
-window.addEventListener('resize', () => {
-  renderCurrentPage();
-});
-
-// 3. 時計更新機能
+// 2. 時計更新機能
 function updateClock() {
   const clockEl = document.getElementById('live-clock');
   if (!clockEl) return;
@@ -67,7 +47,7 @@ function updateClock() {
   clockEl.textContent = `${hours}:${minutes}:${seconds}`;
 }
 
-// 4. ローカルストレージ（閲覧キャッシュ）制御
+// 3. ローカルストレージ（閲覧キャッシュ）制御
 function loadLocalCache(key) {
   try {
     const data = localStorage.getItem(`topscore_cache_${key}`);
@@ -86,7 +66,7 @@ function saveLocalCache(key, data) {
   }
 }
 
-// 5. 初期化 & タイマー起動
+// 4. 初期化 & タイマー起動
 document.addEventListener('DOMContentLoaded', () => {
   // キャッシュから初期データを即時読み込み（画面のチラつき防止）
   day1DataCache = loadLocalCache('day1') || [];
@@ -134,11 +114,14 @@ function startPageRotation() {
       renderCurrentPage();
     } else {
       const currentData = getCurrentTargetData();
-      const pageSize = calculatePageSize();
-      if (currentData.length > pageSize) {
-        const maxPages = Math.ceil(currentData.length / pageSize);
-        currentPage = (currentPage + 1) % maxPages;
-        renderCurrentPage();
+      const pageSize = 7; // ポディウム1〜3位固定 + 下部4〜7位（4枠）スライド
+      if (currentData.length > 3) {
+        const remainingCount = currentData.length - 3;
+        const maxSubPages = Math.ceil(remainingCount / 4);
+        if (maxSubPages > 1) {
+          currentPage = (currentPage + 1) % maxSubPages;
+          renderCurrentPage();
+        }
       }
     }
   }, PAGE_ROTATE_INTERVAL);
@@ -267,7 +250,6 @@ async function fetchViewerData(category, resetPage = true) {
       day2DataCache = extractRankingArray(dataDay2);
       totalDataCache = extractRankingArray(dataTotal);
 
-      // キャッシュに保存
       saveLocalCache('day2', day2DataCache);
       saveLocalCache('total', totalDataCache);
     } else {
@@ -288,12 +270,11 @@ async function fetchViewerData(category, resetPage = true) {
     renderCurrentPage();
   } catch (e) {
     console.error('Fetch Error:', e);
-    // エラー時でも既存のキャッシュデータでレンダリングを試みる
     renderCurrentPage();
   }
 }
 
-// ランキングレンダリング描画
+// ランキング描画（手書きメモ準拠：ポディウム/スライド構築）
 function renderCurrentPage() {
   const container = document.getElementById('viewer-ranking');
   if (!container) return;
@@ -303,50 +284,99 @@ function renderCurrentPage() {
 
   if (!currentData || currentData.length === 0) {
     container.innerHTML = `
-      <div style="text-align:center; font-weight:700; color:var(--text-sub); margin-bottom:12px;">${currentLabel}</div>
-      <p style="text-align:center; padding: 40px; color: var(--text-sub);">現在ランキングデータを読み込み中、または記録がありません</p>
+      <div style="text-align:center; font-weight:800; color:var(--text-sub); margin-bottom:12px;">${currentLabel}</div>
+      <p style="text-align:center; padding: 60px; color: var(--text-sub); font-size:1.1rem; font-weight:700;">現在ランキングデータを読み込み中、または記録がありません</p>
     `;
     return;
   }
 
-  const pageSize = calculatePageSize();
-  const maxPages = Math.ceil(currentData.length / pageSize);
+  const top1 = currentData[0];
+  const top2 = currentData[1];
+  const top3 = currentData[2];
+  const restItems = currentData.slice(3);
 
-  if (currentPage >= maxPages) currentPage = 0;
+  // 下部グリッドのスライドページ計算
+  const subItemsPerPage = 4;
+  const maxSubPages = Math.max(1, Math.ceil(restItems.length / subItemsPerPage));
+  if (currentPage >= maxSubPages) currentPage = 0;
 
-  const startIndex = currentPage * pageSize;
-  const pageItems = currentData.slice(startIndex, startIndex + pageSize);
+  const subStartIndex = currentPage * subItemsPerPage;
+  const currentSubItems = restItems.slice(subStartIndex, subStartIndex + subItemsPerPage);
 
-  let headerHtml = `
-    <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.95rem; font-weight:800; color:var(--text-sub); margin-bottom:10px; padding:0 4px;">
+  let html = `
+    <div style="display:flex; justify-content:space-between; align-items:center; font-size:1rem; font-weight:800; color:var(--text-sub); margin-bottom:10px; padding:0 4px;">
       <span>${currentLabel}</span>
-      <span>${maxPages > 1 ? `PAGE ${currentPage + 1} /${maxPages} ` : ''}（全 ${currentData.length} 人）</span>
+      <span>${maxSubPages > 1 ? `SLIDE ${currentPage + 1} /${maxSubPages} ` : ''}（全 ${currentData.length} 人）</span>
     </div>
   `;
 
-  const cardsHtml = pageItems.map((item, index) => {
-    const rank = startIndex + index + 1;
-    let rankClass = '';
-    let crown = '';
-
-    if (rank === 1) { rankClass = 'rank-1'; crown = '👑 '; }
-    else if (rank === 2) { rankClass = 'rank-2'; crown = '🥈 '; }
-    else if (rank === 3) { rankClass = 'rank-3'; crown = '🥉 '; }
-
-    const newBadge = item.is_new ? '<span style="background:#ef4444; color:white; font-size:0.75rem; font-weight:bold; padding:2px 8px; border-radius:10px; margin-left:8px; vertical-align:middle;">NEW</span>' : '';
-
-    return `
-      <div class="viewer-card ${rankClass}">
+  // 1. 【1位カード (ドカンと巨大表示)】
+  if (top1) {
+    const newBadge = top1.is_new ? '<span style="background:#ef4444; color:white; font-size:0.8rem; font-weight:bold; padding:2px 8px; border-radius:10px; margin-left:8px;">NEW</span>' : '';
+    html += `
+      <div class="podium-rank-1">
         <div style="display:flex; align-items:center; gap:16px;">
-          <span class="rank-badge">${rank}</span>
-          <span style="font-weight:800; font-size:1.15rem;">${crown}${escapeHtml(item.nickname || item.name)}${newBadge}</span>
+          <span class="rank-badge-large">👑 1位</span>
+          <div>
+            <div style="font-size:0.85rem; color:#b45309; font-weight:800;">CURRENT TOP</div>
+            <div class="name-large">${escapeHtml(top1.nickname || top1.name)}${newBadge}</div>
+          </div>
         </div>
-        <span class="score-text">${Number(item.score || 0).toLocaleString()} <span style="font-size:0.9rem;">問</span></span>
+        <div class="score-large">${Number(top1.score || 0).toLocaleString()} <span style="font-size:1.1rem;">点</span></div>
       </div>
     `;
-  }).join('');
+  }
 
-  container.innerHTML = headerHtml + cardsHtml;
+  // 2. 【2位・3位カード (2列表示)】
+  if (top2 || top3) {
+    html += `<div class="podium-sub-container">`;
+    if (top2) {
+      const newBadge = top2.is_new ? '<span style="background:#ef4444; color:white; font-size:0.7rem; font-weight:bold; padding:2px 6px; border-radius:8px; margin-left:4px;">NEW</span>' : '';
+      html += `
+        <div class="podium-rank-2">
+          <div>
+            <span style="font-size:0.8rem; font-weight:800; color:#475569;">🥈 2位</span>
+            <div style="font-size:1.15rem; font-weight:800;">${escapeHtml(top2.nickname || top2.name)}${newBadge}</div>
+          </div>
+          <div style="font-size:1.3rem; font-weight:800; color:#334155;">${Number(top2.score || 0).toLocaleString()}点</div>
+        </div>
+      `;
+    }
+    if (top3) {
+      const newBadge = top3.is_new ? '<span style="background:#ef4444; color:white; font-size:0.7rem; font-weight:bold; padding:2px 6px; border-radius:8px; margin-left:4px;">NEW</span>' : '';
+      html += `
+        <div class="podium-rank-3">
+          <div>
+            <span style="font-size:0.8rem; font-weight:800; color:#c2410c;">🥉 3位</span>
+            <div style="font-size:1.15rem; font-weight:800;">${escapeHtml(top3.nickname || top3.name)}${newBadge}</div>
+          </div>
+          <div style="font-size:1.3rem; font-weight:800; color:#c2410c;">${Number(top3.score || 0).toLocaleString()}点</div>
+        </div>
+      `;
+    }
+    html += `</div>`;
+  }
+
+  // 3. 【4位〜7位... (グリッド＋自動スライド表示)】
+  if (currentSubItems.length > 0) {
+    html += `<div class="podium-grid-container" style="margin-top:12px;">`;
+    currentSubItems.forEach((item, idx) => {
+      const rankNum = 4 + subStartIndex + idx;
+      const newBadge = item.is_new ? '<span style="background:#ef4444; color:white; font-size:0.65rem; font-weight:bold; padding:2px 6px; border-radius:6px; margin-left:4px;">NEW</span>' : '';
+      html += `
+        <div class="viewer-card">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span class="rank-badge">${rankNum}</span>
+            <span style="font-weight:700; font-size:1rem;">${escapeHtml(item.nickname || item.name)}${newBadge}</span>
+          </div>
+          <span class="score-text" style="font-size:1.1rem;">${Number(item.score || 0).toLocaleString()}点</span>
+        </div>
+      `;
+    });
+    html += `</div>`;
+  }
+
+  container.innerHTML = html;
 }
 
 // カテゴリ切り替え（タブクリック時）

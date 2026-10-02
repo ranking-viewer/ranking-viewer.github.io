@@ -3,90 +3,191 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>司会者用 点数入力画面</title>
+  <title>TopScore LIVE - 司会用スコア入力</title>
   <link rel="stylesheet" href="css/common.css">
   <style>
-    body { padding: 20px; font-family: sans-serif; background: #f8fafc; }
-    .card { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto; }
-    h2 { text-align: center; margin-bottom: 8px; color: #1e3a8a; }
-    .viewer-link { text-align: center; margin-bottom: 20px; }
-    .viewer-link a { color: #2563eb; font-weight: bold; text-decoration: none; font-size: 0.95rem; }
-    .viewer-link a:hover { text-decoration: underline; }
-    .form-group { margin-bottom: 16px; }
-    label { display: block; font-weight: bold; margin-bottom: 6px; font-size: 0.9rem; }
-    input, select { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
-    button { width: 100%; padding: 14px; background: #2563eb; color: white; border: none; border-radius: 12px; font-weight: bold; font-size: 1.1rem; cursor: pointer; }
-    button:disabled { background: #94a3b8; }
-    #msg { margin-top: 15px; text-align: center; font-weight: bold; }
+    body {
+      background-color: #f1f5f9;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      margin: 0;
+      padding: 16px;
+      color: #0f172a;
+    }
+    .admin-card {
+      max-width: 480px;
+      margin: 20px auto;
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      border: 1px solid #e2e8f0;
+    }
+    .admin-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #2563eb;
+      margin-top: 0;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .form-group {
+      margin-bottom: 18px;
+    }
+    .form-group label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 6px;
+      font-size: 0.95rem;
+      color: #334155;
+    }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 12px;
+      font-size: 1rem;
+      border: 2px solid #cbd5e1;
+      border-radius: 10px;
+      box-sizing: border-box;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus, .form-group select:focus {
+      border-color: #2563eb;
+    }
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      background-color: #2563eb;
+      color: #ffffff;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+      transition: background-color 0.2s, transform 0.1s;
+    }
+    .submit-btn:hover {
+      background-color: #1d4ed8;
+    }
+    .submit-btn:active {
+      transform: scale(0.98);
+    }
+    .auth-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+    .auth-box {
+      background: white;
+      padding: 28px;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+    .status-msg {
+      margin-top: 12px;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      display: none;
+      text-align: center;
+    }
+    .status-msg.success {
+      background-color: #dcfce7;
+      color: #15803d;
+    }
+    .status-msg.error {
+      background-color: #fee2e2;
+      color: #b91c1c;
+    }
+    .auth-badge {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f8fafc;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      color: #64748b;
+      margin-bottom: 16px;
+      border: 1px solid #e2e8f0;
+    }
+    .logout-btn {
+      background: none;
+      border: none;
+      color: #ef4444;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.8rem;
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
 
-<div class="card">
-  <h2>🏆 点数登録 (司会用)</h2>
-  <div class="viewer-link">
-    <a href="https://ranking-viewer.github.io/" target="_blank" rel="noopener noreferrer">📺 ランキング閲覧画面を開く ↗</a>
+  <!-- パスワード認証モーダル（未認証時のみ表示） -->
+  <div id="auth-modal" class="auth-overlay">
+    <div class="auth-box">
+      <div style="font-size: 3rem; margin-bottom: 8px;">🔒</div>
+      <h2 style="margin: 0 0 8px 0; font-size: 1.3rem; color: #0f172a;">司会専用認証</h2>
+      <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px;">パスワードを入力してください。<br>一度認証すると次回から自動ログインします。</p>
+      <input type="password" id="auth-password-input" placeholder="パスワード" style="width: 100%; padding: 12px; font-size: 1rem; border: 2px solid #cbd5e1; border-radius: 10px; margin-bottom: 16px; box-sizing: border-box; text-align: center;">
+      <button class="submit-btn" onclick="checkPassword()">認証する</button>
+      <p id="auth-error-text" style="color: #ef4444; font-weight: 700; font-size: 0.85rem; margin-top: 12px; display: none;">パスワードが違います</p>
+    </div>
   </div>
-  <form id="scoreForm">
-    <div class="form-group">
-      <label for="day">日程</label>
-      <select id="day">
-        <option value="day1">1日目</option>
-        <option value="day2">2日目</option>
-      </select>
+
+  <!-- スコア入力メインフォーム -->
+  <div class="admin-card">
+    <div class="auth-badge">
+      <span>🟢 司会者として認証済み</span>
+      <button class="logout-btn" onclick="logoutAdmin()">認証解除</button>
     </div>
-    <div class="form-group">
-      <label for="nickname">ニックネーム / チーム名</label>
-      <input type="text" id="nickname" required placeholder="例: たろう">
+
+    <h1 class="admin-title">🎤 TopScore LIVE<br><span style="font-size: 1rem; color: #64748b; font-weight: 600;">スコア登録フォーム</span></h1>
+
+    <form id="score-form" onsubmit="handleScoreSubmit(event)">
+      <div class="form-group">
+        <label for="day-select">対象日程</label>
+        <select id="day-select" required>
+          <option value="day1">1日目</option>
+          <option value="day2">2日目</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="nickname-input">ニックネーム・チーム名</label>
+        <input type="text" id="nickname-input" placeholder="例: クレイジータイガー" required maxlength="20">
+      </div>
+
+      <div class="form-group">
+        <label for="score-input">獲得スコア（点数）</label>
+        <input type="number" id="score-input" placeholder="例: 12500" required min="0" max="9999999">
+      </div>
+
+      <button type="submit" class="submit-btn" id="submit-btn">スコアを送信・反映</button>
+    </form>
+
+    <div id="status-message" class="status-msg"></div>
+
+    <div style="margin-top: 24px; text-align: center;">
+      <a href="index.html" style="color: #64748b; font-size: 0.85rem; text-decoration: none; font-weight: 600;">← モニター画面を開く</a>
     </div>
-    <div class="form-group">
-      <label for="score">正解数</label>
-      <input type="number" id="score" inputmode="numeric" required placeholder="例: 85">
-    </div>
-    <button type="submit" id="submitBtn">送信する</button>
-  </form>
-  <div id="msg"></div>
-</div>
+  </div>
 
-<script src="js/config.js"></script>
-<script>
-  document.getElementById('scoreForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('submitBtn');
-    const msg = document.getElementById('msg');
-    
-    const day = document.getElementById('day').value;
-    const nickname = document.getElementById('nickname').value.trim();
-    const score = document.getElementById('score').value;
-
-    btn.disabled = true;
-    msg.style.color = '#64748b';
-    msg.textContent = '送信中...';
-
-    try {
-      const response = await fetch(CONFIG.GAS_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ day, nickname, score: Number(score) })
-      });
-
-      const resData = await response.json();
-      if (resData.status === 'success' || response.ok) {
-        msg.style.color = '#16a34a';
-        msg.textContent = '✅ 登録完了しました！';
-        document.getElementById('nickname').value = '';
-        document.getElementById('score').value = '';
-        document.getElementById('nickname').focus(); // 次の入力のためにフォーカスセット
-      } else {
-        throw new Error('送信エラー');
-      }
-    } catch (err) {
-      msg.style.color = '#dc2626';
-      msg.textContent = '❌ 送信に失敗しました';
-    } finally {
-      btn.disabled = false;
-    }
-  });
-</script>
+  <script src="js/config.js"></script>
+  <script src="js/admin.js"></script>
 </body>
 </html>
