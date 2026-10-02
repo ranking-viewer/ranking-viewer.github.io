@@ -19,9 +19,143 @@ body {
 }
 
 .app-container {
-  max-width: 960px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 16px;
+}
+
+/* メインコンテンツ（左：ランキング / 右：QRコード） */
+.content-layout {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.content-layout .ranking-list {
+  flex: 3;
+  min-width: 0;
+}
+
+/* 右側：QRコードエリア */
+.qr-section {
+  flex: 1;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  position: sticky;
+  top: 16px;
+}
+
+.qr-title { font-size: 1.15rem; font-weight: 800; margin-bottom: 6px; }
+.qr-sub { font-size: 0.8rem; color: var(--text-sub); margin-bottom: 16px; }
+.qr-card {
+  background: #ffffff;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.qr-card img { width: 100%; max-width: 220px; height: auto; display: block; }
+
+/* 1〜3位：行表示 */
+.rank-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  margin-bottom: 10px;
+  border: 2px solid var(--border-color);
+  background: var(--card-bg);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+.rank-row-1 {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border-color: #f59e0b;
+  padding: 18px 20px;
+}
+
+.rank-row-2 {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-color: #94a3b8;
+}
+
+.rank-row-3 {
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  border-color: #ea580c;
+}
+
+.rank-row-badge {
+  font-size: 1.2rem;
+  font-weight: 900;
+  white-space: nowrap;
+  min-width: 70px;
+}
+
+.rank-row-1 .rank-row-badge { color: #b45309; font-size: 1.4rem; }
+.rank-row-2 .rank-row-badge { color: #475569; }
+.rank-row-3 .rank-row-badge { color: #c2410c; }
+
+.rank-row-name {
+  flex: 1;
+  font-size: 1.25rem;
+  font-weight: 800;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rank-row-1 .rank-row-name { font-size: 1.5rem; }
+
+.rank-row-score {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: var(--primary-color);
+  white-space: nowrap;
+}
+
+.rank-row-1 .rank-row-score { color: #d97706; font-size: 1.8rem; }
+.rank-row-3 .rank-row-score { color: #c2410c; }
+
+/* 4位以下：小さく表示 */
+.sub-rank-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.sub-rank-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--card-bg);
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+}
+
+.sub-rank-badge {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  font-weight: 800;
+  font-size: 0.8rem;
+  color: #475569;
+  flex-shrink: 0;
 }
 
 /* ヘッダー */
@@ -387,13 +521,26 @@ body {
 }
 
 @media (max-width: 640px) {
-  .podium-sub-container {
+  .content-layout {
+    flex-direction: column;
+  }
+  .qr-section {
+    position: static;
+    width: 100%;
+  }
+  .sub-rank-grid {
     grid-template-columns: 1fr;
   }
-  .podium-rank-1 .name-large {
-    font-size: 1.3rem;
+  .rank-row-name {
+    font-size: 1.05rem;
   }
-  .podium-rank-1 .score-large {
-    font-size: 1.6rem;
+  .rank-row-1 .rank-row-name {
+    font-size: 1.2rem;
+  }
+  .rank-row-score {
+    font-size: 1.1rem;
+  }
+  .rank-row-1 .rank-row-score {
+    font-size: 1.3rem;
   }
 }

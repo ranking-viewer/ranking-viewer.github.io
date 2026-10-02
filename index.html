@@ -34,10 +34,21 @@
       <button class="tab-btn active" onclick="switchCategory('total', this)">2日合計</button>
     </div>
 
-    <!-- ランキング一覧表示領域 -->
-    <main id="viewer-ranking" class="ranking-list">
-      <!-- JavaScriptで自動生成されます -->
-    </main>
+    <!-- ランキング一覧表示領域 ＆ QRコード（左右配置） -->
+    <div class="content-layout">
+      <main id="viewer-ranking" class="ranking-list">
+        <!-- JavaScriptで自動生成されます -->
+      </main>
+
+      <!-- 右側：QRコードエリア -->
+      <aside class="qr-section">
+        <div class="qr-title">📱 ランキングはこちら</div>
+        <div class="qr-sub">スマートフォンでスキャン</div>
+        <div class="qr-card">
+          <img id="qr-code" src="" alt="QRコード">
+        </div>
+      </aside>
+    </div>
 
     <!-- フッター -->
     <footer style="text-align: center; margin-top: 20px; padding: 12px; font-size: 0.85rem; color: var(--text-sub);">

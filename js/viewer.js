@@ -76,6 +76,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // キャッシュデータがあればまず描画
   renderCurrentPage();
 
+  // QRコード生成
+  setupQRCode();
+
   // 最新データを取得
   fetchViewerData('total');
 
@@ -114,10 +117,10 @@ function startPageRotation() {
       renderCurrentPage();
     } else {
       const currentData = getCurrentTargetData();
-      const pageSize = 7; // ポディウム1〜3位固定 + 下部4〜7位（4枠）スライド
+      const subPerPage = 3; // 4位以下の小表示は1ページ3件
       if (currentData.length > 3) {
         const remainingCount = currentData.length - 3;
-        const maxSubPages = Math.ceil(remainingCount / 4);
+        const maxSubPages = Math.ceil(remainingCount / subPerPage);
         if (maxSubPages > 1) {
           currentPage = (currentPage + 1) % maxSubPages;
           renderCurrentPage();
@@ -149,6 +152,14 @@ function getCurrentLabel() {
   } else {
     return day2ToggleState === 'day2' ? '【 2日目 ランキング 】' : '【 2日合計 ランキング 】';
   }
+}
+
+// QRコード生成（閲覧ページへのリンク）
+function setupQRCode() {
+  const qrEl = document.getElementById('qr-code');
+  if (!qrEl) return;
+  const targetUrl = window.location.href.split('#')[0];
+  qrEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(targetUrl)}`;
 }
 
 // ハンバーガーメニュー開閉
@@ -296,7 +307,7 @@ function renderCurrentPage() {
   const restItems = currentData.slice(3);
 
   // 下部グリッドのスライドページ計算
-  const subItemsPerPage = 4;
+  const subItemsPerPage = 3; // 3の下に4,5,6位を小さく表示
   const maxSubPages = Math.max(1, Math.ceil(restItems.length / subItemsPerPage));
   if (currentPage >= maxSubPages) currentPage = 0;
 
@@ -310,66 +321,34 @@ function renderCurrentPage() {
     </div>
   `;
 
-  // 1. 【1位カード (ドカンと巨大表示)】
-  if (top1) {
-    const newBadge = top1.is_new ? '<span style="background:#ef4444; color:white; font-size:0.8rem; font-weight:bold; padding:2px 8px; border-radius:10px; margin-left:8px;">NEW</span>' : '';
+  // 1. 【1〜3位：行表示】
+  [top1, top2, top3].forEach((item, idx) => {
+    if (!item) return;
+    const rankNum = idx + 1;
+    const newBadge = item.is_new ? '<span style="background:#ef4444; color:white; font-size:0.65rem; font-weight:bold; padding:2px 6px; border-radius:6px; margin-left:6px;">NEW</span>' : '';
+    const medal = rankNum === 1 ? '👑' : rankNum === 2 ? '🥈' : '🥉';
     html += `
-      <div class="podium-rank-1">
-        <div style="display:flex; align-items:center; gap:16px;">
-          <span class="rank-badge-large">👑 1位</span>
-          <div>
-            <div style="font-size:0.85rem; color:#b45309; font-weight:800;">CURRENT TOP</div>
-            <div class="name-large">${escapeHtml(top1.nickname || top1.name)}${newBadge}</div>
-          </div>
-        </div>
-        <div class="score-large">${Number(top1.score || 0).toLocaleString()} <span style="font-size:1.1rem;">点</span></div>
+      <div class="rank-row rank-row-${rankNum}">
+        <span class="rank-row-badge">${medal} ${rankNum}位</span>
+        <span class="rank-row-name">${escapeHtml(item.nickname || item.name)}${newBadge}</span>
+        <span class="rank-row-score">${Number(item.score || 0).toLocaleString()}点</span>
       </div>
     `;
-  }
+  });
 
-  // 2. 【2位・3位カード (2列表示)】
-  if (top2 || top3) {
-    html += `<div class="podium-sub-container">`;
-    if (top2) {
-      const newBadge = top2.is_new ? '<span style="background:#ef4444; color:white; font-size:0.7rem; font-weight:bold; padding:2px 6px; border-radius:8px; margin-left:4px;">NEW</span>' : '';
-      html += `
-        <div class="podium-rank-2">
-          <div>
-            <span style="font-size:0.8rem; font-weight:800; color:#475569;">🥈 2位</span>
-            <div style="font-size:1.15rem; font-weight:800;">${escapeHtml(top2.nickname || top2.name)}${newBadge}</div>
-          </div>
-          <div style="font-size:1.3rem; font-weight:800; color:#334155;">${Number(top2.score || 0).toLocaleString()}点</div>
-        </div>
-      `;
-    }
-    if (top3) {
-      const newBadge = top3.is_new ? '<span style="background:#ef4444; color:white; font-size:0.7rem; font-weight:bold; padding:2px 6px; border-radius:8px; margin-left:4px;">NEW</span>' : '';
-      html += `
-        <div class="podium-rank-3">
-          <div>
-            <span style="font-size:0.8rem; font-weight:800; color:#c2410c;">🥉 3位</span>
-            <div style="font-size:1.15rem; font-weight:800;">${escapeHtml(top3.nickname || top3.name)}${newBadge}</div>
-          </div>
-          <div style="font-size:1.3rem; font-weight:800; color:#c2410c;">${Number(top3.score || 0).toLocaleString()}点</div>
-        </div>
-      `;
-    }
-    html += `</div>`;
-  }
-
-  // 3. 【4位〜7位... (グリッド＋自動スライド表示)】
+  // 2. 【4〜6位...：3の下に小さく表示】
   if (currentSubItems.length > 0) {
-    html += `<div class="podium-grid-container" style="margin-top:12px;">`;
+    html += `<div class="sub-rank-grid" style="margin-top:12px;">`;
     currentSubItems.forEach((item, idx) => {
       const rankNum = 4 + subStartIndex + idx;
-      const newBadge = item.is_new ? '<span style="background:#ef4444; color:white; font-size:0.65rem; font-weight:bold; padding:2px 6px; border-radius:6px; margin-left:4px;">NEW</span>' : '';
+      const newBadge = item.is_new ? '<span style="background:#ef4444; color:white; font-size:0.6rem; font-weight:bold; padding:1px 5px; border-radius:6px; margin-left:4px;">NEW</span>' : '';
       html += `
-        <div class="viewer-card">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <span class="rank-badge">${rankNum}</span>
-            <span style="font-weight:700; font-size:1rem;">${escapeHtml(item.nickname || item.name)}${newBadge}</span>
+        <div class="sub-rank-card">
+          <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+            <span class="sub-rank-badge">${rankNum}</span>
+            <span style="font-weight:700; font-size:0.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(item.nickname || item.name)}${newBadge}</span>
           </div>
-          <span class="score-text" style="font-size:1.1rem;">${Number(item.score || 0).toLocaleString()}点</span>
+          <span style="font-weight:800; font-size:1rem; color:var(--primary-color); white-space:nowrap;">${Number(item.score || 0).toLocaleString()}点</span>
         </div>
       `;
     });
