@@ -132,7 +132,7 @@
     </section>
   </div>
 
-  <script src="js/config.js"></script>
+  <script src="../js/config.js"></script>
   <script>
     // ページロード時初期化
     window.addEventListener("DOMContentLoaded", () => {
@@ -143,9 +143,9 @@
 
     // 右側QRコードの生成 (index.html へのリンク)
     function setupQRCode() {
-      // 現在のドメインパスから index.html のURLを動的生成
-      const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
-      const targetUrl = baseUrl + "index.html";
+      // モニターは /monitor/ 配下なので、親ディレクトリの index.html を指す
+      const baseUrl = window.location.pathname.replace(/\/monitor\/.*$/, '/');
+      const targetUrl = window.location.origin + baseUrl + "index.html";
       
       const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(targetUrl)}`;
       document.getElementById("qr-code").src = qrApiUrl;
@@ -154,16 +154,25 @@
     // データ取得＆更新
     async function fetchRankingData() {
       try {
-        const response = await fetch(CONFIG.GAS_API_URL);
+        const response = await fetch(`${CONFIG.GAS_API_URL}?day=total`);
         const rawData = await response.json();
 
-        // 過去データをクリアし、最新データで再計算
-        const rankedData = calculateTiedRanks(rawData.scores || rawData);
+        // GASレスポンス { ranking: [...] } から配列を抽出
+        const list = Array.isArray(rawData) ? rawData
+          : (rawData && Array.isArray(rawData.ranking)) ? rawData.ranking
+          : (rawData && Array.isArray(rawData.scores)) ? rawData.scores
+          : [];
+
+        const rankedData = calculateTiedRanks(list);
         renderRanking(rankedData);
 
         document.getElementById("update-time").textContent = `最終更新: ${new Date().toLocaleTimeString()}`;
       } catch (error) {
         console.error("データ取得失敗:", error);
+        const listEl = document.getElementById("ranking-list");
+        if (listEl && listEl.querySelector('.ranking-item') && listEl.textContent.includes('データ読込中')) {
+          listEl.innerHTML = '<li class="ranking-item">データを取得できませんでした（再試行中）</li>';
+        }
       }
     }
 
