@@ -6,7 +6,7 @@ const CONFIG = {
   ADMIN_PASSWORD: "top",
 
   // 自動更新・データ取得間隔（ミリ秒）
-  AUTO_REFRESH_INTERVAL: 15000, // 15秒
+  AUTO_REFRESH_INTERVAL: 5000, // 5秒
 
   // スライド回転・切り替え間隔（ミリ秒）
   PAGE_ROTATE_INTERVAL: 6000,  // 6秒

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'topscore-live-v2';
+const CACHE_NAME = 'topscore-live-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -44,27 +44,21 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// ネットワークリクエストのキャッチ（キャッシュファースト）
+// ネットワークリクエストのキャッチ（基本ネットワーク優先・失敗時はキャッシュ）
 self.addEventListener('fetch', (event) => {
-  // GAS APIへのリクエストはキャッシュせず常にネットワークへ
-  if (event.request.url.includes('script.google.com')) {
+  // GAS API・QR画像生成APIへのリクエストはキャッシュせず常にネットワークへ
+  if (event.request.url.includes('script.google.com') || event.request.url.includes('api.qrserver.com')) {
     return;
   }
 
-  // HTMLファイルは常にネットワーク優先（更新が反映されやすくする）
-  if (event.request.mode === 'navigate' || event.request.url.endsWith('.html')) {
-    event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request))
-    );
-    return;
-  }
-
+  // それ以外も基本はネットワーク優先（更新がすぐ反映されるように）、失敗時はキャッシュ
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request);
-    })
+    fetch(event.request)
+      .then((response) => {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
