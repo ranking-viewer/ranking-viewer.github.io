@@ -211,7 +211,7 @@
         li.className = `ranking-item rank-${item.rank}`;
         li.innerHTML = `
           <div class="rank-badge">${item.rank}位</div>
-          <div class="player-name">${escapeHtml(item.name)}</div>
+          <div class="player-name">${escapeHtml(item.nickname || item.name)}</div>
           <div class="player-score">${item.score} pt</div>
         `;
         listEl.appendChild(li);

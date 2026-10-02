@@ -595,7 +595,40 @@ let bgmCtx = null;
 let bgmGain = null;
 let bgmTimer = null;
 
+// --- BGM（フォルダ内の音楽ファイルをループ再生。無ければWebAudio生成音） ---
+let bgmAudio = null;
+
+function startFileBGM() {
+  try {
+    if (!bgmAudio) {
+      bgmAudio = new Audio('music/bgm.mp3');
+      bgmAudio.loop = true;      // ループ再生
+      bgmAudio.volume = 0.15;    // 小さめ音量
+    }
+    const p = bgmAudio.play();
+    if (p && p.catch) {
+      p.catch(() => { bgmAudio = null; startWebAudioBGM(); });
+    }
+    bgmOn = true;
+    const bgmBtn = document.getElementById('bgm-btn');
+    if (bgmBtn) bgmBtn.textContent = '🎵 BGM OFF';
+  } catch (e) {
+    startWebAudioBGM();
+  }
+}
+
 function startBGM() {
+  startFileBGM();
+}
+
+function stopFileBGM() {
+  if (bgmAudio) {
+    bgmAudio.pause();
+    bgmAudio.currentTime = 0;
+  }
+}
+
+function startWebAudioBGM() {
   const bgmBtn = document.getElementById('bgm-btn');
   try {
     if (!bgmCtx) {
@@ -626,6 +659,7 @@ function startBGM() {
 
 function stopBGM() {
   const bgmBtn = document.getElementById('bgm-btn');
+  stopFileBGM();
   if (bgmTimer) clearInterval(bgmTimer);
   bgmTimer = null;
   bgmOn = false;
