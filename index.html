@@ -137,6 +137,7 @@
       <ul class="ranking-list" id="ranking-list">
         <li class="ranking-item">データ読込中...</li>
       </ul>
+      <div class="last-update" style="margin-top:12px; color:#94a3b8;">8位以降は右のQRコード（詳細ページ）でご確認ください</div>
       <div class="last-update" id="update-time">最終更新: --</div>
     </section>
 
@@ -215,7 +216,8 @@
         listEl.innerHTML = '<li class="ranking-item">現在データはありません</li>';
         return;
       }
-      data.forEach(item => {
+      // スクリーンには上位7位まで表示（それ以降は詳細ページへ）
+      data.slice(0, 7).forEach(item => {
         const li = document.createElement('li');
         li.className = `ranking-item rank-${item.rank}`;
         li.innerHTML = `
