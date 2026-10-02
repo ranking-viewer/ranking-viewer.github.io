@@ -404,6 +404,118 @@ body {
   transform: scale(1.02);
 }
 
+/* --- ツールバー・状態表示 --- */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.toolbar-input,
+.toolbar-select,
+.toolbar-btn {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--card-bg);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--text-main);
+  cursor: pointer;
+}
+
+.toolbar-input { flex: 1; min-width: 140px; cursor: text; }
+.toolbar-btn.active { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
+
+.status-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--text-sub);
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.offline-banner {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #b91c1c;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.freeze-banner {
+  background: #eff6ff;
+  border: 1px solid #93c5fd;
+  color: #1d4ed8;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.frozen { filter: saturate(0.6); }
+
+/* 順位変動バッジ */
+.diff-up { color: #059669; font-weight: 900; font-size: 0.85em; }
+.diff-down { color: #dc2626; font-weight: 900; font-size: 0.85em; }
+
+@keyframes flashUp {
+  0% { box-shadow: 0 0 0 3px rgba(5,150,105,0.7); }
+  100% { box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+}
+@keyframes flashDown {
+  0% { box-shadow: 0 0 0 3px rgba(220,38,38,0.6); }
+  100% { box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+}
+.rank-up { animation: flashUp 2s ease-out; }
+.rank-down { animation: flashDown 2s ease-out; }
+
+@keyframes rowIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.rank-row, .sub-rank-card { animation: rowIn 0.35s ease-out; }
+
+/* 紙吹雪 */
+.confetti-piece {
+  position: fixed;
+  top: -20px;
+  z-index: 5000;
+  border-radius: 2px;
+  pointer-events: none;
+  animation: confettiFall 2.5s ease-in forwards;
+}
+@keyframes confettiFall {
+  0% { transform: translateY(0) rotate(0); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+
+/* テーマ切替 */
+body.theme-festa {
+  --primary-color: #db2777;
+  --bg-color: #fdf2f8;
+}
+body.theme-dark {
+  --bg-color: #0f172a;
+  --card-bg: #1e293b;
+  --text-main: #f1f5f9;
+  --text-sub: #94a3b8;
+  --border-color: #334155;
+}
+
+/* 大型モニター表示 */
+body.monitor-large .rank-row-name { font-size: 2rem; }
+body.monitor-large .rank-row-1 .rank-row-name { font-size: 2.4rem; }
+body.monitor-large .rank-row-score { font-size: 2.2rem; }
+body.monitor-large .rank-row-1 .rank-row-score { font-size: 2.8rem; }
+body.monitor-large .sub-rank-grid { grid-template-columns: repeat(3, 1fr); }
+body.monitor-large .sub-rank-card { font-size: 1.3rem; padding: 16px 18px; }
+body.monitor-large .site-title { font-size: 2.4rem; }
+
 /* --- 画像拡大（ライトボックス）モーダル --- */
 .image-modal-overlay {
   display: none;

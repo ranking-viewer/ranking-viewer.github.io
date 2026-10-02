@@ -12,6 +12,18 @@ let autoPageTimer = null;
 let day2ToggleState = 'day2'; // 'day2' または 'total'
 const PAGE_ROTATE_INTERVAL = (typeof CONFIG !== 'undefined' && CONFIG.PAGE_ROTATE_INTERVAL) || 6000;
 
+// --- 追加機能の状態 ---
+let prevPositions = {};       // 前回の順位 { account_id: index }
+let searchQuery = '';
+let displayCount = 10;        // 10 / 20 / 'all'
+let freezeMode = false;
+let podiumMode = false;
+let prevTop1Key = null;
+let nextRefreshAt = Date.now() + 15000;
+let qrTargetViewer = true;
+let themeIdx = 0;
+const THEMES = ['', 'theme-festa', 'theme-dark'];
+
 // 日本時間の12時以降かどうか判定
 function isAfterJst12PM() {
   try {
@@ -76,14 +88,23 @@ document.addEventListener('DOMContentLoaded', () => {
   // キャッシュデータがあればまず描画
   renderCurrentPage();
 
-  // QRコード生成
+   const interval = (typeof CONFIG !== 'undefined' && CONFIG.AUTO_REFRESH_INTERVAL) || 15000;
+   setInterval(() => {
+     if (freezeMode) return;
+     fetchViewerData(currentTab, false);
+   }, interval);
+
+   // QRコード生成
   setupQRCode();
+
+   // 検索・件数・各種ボタンのイベント登録
+  initToolbar();
+
+   // 1秒ごとのカウントダウン表示
+  setInterval(updateNextRefreshLabel, 1000);
 
   // 最新データを取得
   fetchViewerData('total');
-
-  // 15秒ごとにバックグラウンドで最新データを取得
-  setInterval(() => fetchViewerData(currentTab, false), (typeof CONFIG !== 'undefined' && CONFIG.AUTO_REFRESH_INTERVAL) || 15000);
 
   // 6秒ローテーションタイマー起動
   startPageRotation();
@@ -109,6 +130,7 @@ function startPageRotation() {
   if (autoPageTimer) clearInterval(autoPageTimer);
   
   autoPageTimer = setInterval(() => {
+    if (freezeMode) return;
     const isAfter12 = isAfterJst12PM();
 
     if (currentTab === 'day2' && !isAfter12) {
@@ -152,14 +174,6 @@ function getCurrentLabel() {
   } else {
     return day2ToggleState === 'day2' ? '【 2日目 ランキング 】' : '【 2日合計 ランキング 】';
   }
-}
-
-// QRコード生成（閲覧ページへのリンク）
-function setupQRCode() {
-  const qrEl = document.getElementById('qr-code');
-  if (!qrEl) return;
-  const targetUrl = window.location.href.split('#')[0];
-  qrEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(targetUrl)}`;
 }
 
 // ハンバーガーメニュー開閉
@@ -279,9 +293,61 @@ async function fetchViewerData(category, resetPage = true) {
     }
 
     renderCurrentPage();
+
+    // 更新成功
+    lastFetchSucceeded();
   } catch (e) {
     console.error('Fetch Error:', e);
+    const banner = document.getElementById('offline-banner');
+    if (banner) banner.style.display = 'block';
     renderCurrentPage();
+  }
+}
+
+function lastFetchSucceeded() {
+  const banner = document.getElementById('offline-banner');
+  if (banner) banner.style.display = 'none';
+  const el = document.getElementById('last-updated');
+  if (el) el.textContent = '最終更新: ' + new Date().toLocaleTimeString('ja-JP');
+  const interval = (typeof CONFIG !== 'undefined' && CONFIG.AUTO_REFRESH_INTERVAL) || 15000;
+  nextRefreshAt = Date.now() + interval;
+
+  // 1位が入れ替わったら紙吹雪
+  const data = getCurrentTargetData();
+  if (data && data.length > 0) {
+    const topKey = data[0].account_id || data[0].nickname || data[0].name;
+    if (prevTop1Key !== null && topKey !== prevTop1Key) {
+      launchConfetti();
+    }
+    prevTop1Key = topKey;
+  }
+}
+
+// 次の更新までのカウントダウン表示
+function updateNextRefreshLabel() {
+  const el = document.getElementById('next-refresh');
+  if (!el) return;
+  if (freezeMode) {
+    el.textContent = '⏸ 更新停止中';
+    return;
+  }
+  const sec = Math.max(0, Math.ceil((nextRefreshAt - Date.now()) / 1000));
+  el.textContent = `次の更新まで 約${sec}秒`;
+}
+
+// 紙吹雪エフェクト（1位更新時）
+function launchConfetti() {
+  const colors = ['#f59e0b', '#ef4444', '#3b82f6', '#10b981', '#a855f7', '#ec4899'];
+  for (let i = 0; i < 40; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + 'vw';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.animationDelay = (Math.random() * 0.5) + 's';
+    piece.style.width = (6 + Math.random() * 6) + 'px';
+    piece.style.height = (10 + Math.random() * 8) + 'px';
+    document.body.appendChild(piece);
+    setTimeout(() => piece.remove(), 3000);
   }
 }
 
@@ -301,10 +367,61 @@ function renderCurrentPage() {
     return;
   }
 
-  const top1 = currentData[0];
-  const top2 = currentData[1];
-  const top3 = currentData[2];
-  const restItems = currentData.slice(3);
+  // 同じスコアは同じ順位として扱う（タイ計算）
+  const ranks = [];
+  const rankMap = {};
+  currentData.forEach((item, i) => {
+    let r;
+    if (i > 0 && Number(item.score || 0) === Number(currentData[i - 1].score || 0)) {
+      r = ranks[i - 1];
+    } else {
+      r = i + 1;
+    }
+    ranks.push(r);
+    rankMap[item.account_id || item.nickname || item.name] = r;
+  });
+
+  // 前回順位との差分（▲▼表示＆ハイライト用）
+  const diffMap = {};
+  currentData.forEach((item, i) => {
+    const key = item.account_id || item.nickname || item.name;
+    if (prevPositions[key] !== undefined) {
+      diffMap[key] = prevPositions[key] - i; // 正=順位アップ
+    }
+  });
+  // 今回の順位を保存（次回比較用）
+  const newPositions = {};
+  currentData.forEach((item, i) => {
+    newPositions[item.account_id || item.nickname || item.name] = i;
+  });
+  prevPositions = newPositions;
+
+  function diffBadge(key) {
+    const d = diffMap[key];
+    if (!d) return '';
+    return d > 0
+      ? `<span class="diff-up">▲${d}</span>`
+      : `<span class="diff-down">▼${Math.abs(d)}</span>`;
+  }
+  function diffClass(key) {
+    const d = diffMap[key];
+    if (!d) return '';
+    return d > 0 ? ' rank-up' : ' rank-down';
+  }
+
+  // 検索・件数絞り込み
+  let displayData = currentData;
+  if (searchQuery) {
+    displayData = displayData.filter(it => (it.nickname || it.name || '').includes(searchQuery));
+  }
+  if (displayCount !== 'all') {
+    displayData = displayData.slice(0, displayCount);
+  }
+
+  const top1 = displayData[0];
+  const top2 = displayData[1];
+  const top3 = displayData[2];
+  const restItems = podiumMode ? [] : displayData.slice(3);
 
   // 下部グリッドのスライドページ計算
   const subItemsPerPage = 3; // 3の下に4,5,6位を小さく表示
@@ -321,25 +438,17 @@ function renderCurrentPage() {
     </div>
   `;
 
-  // 同じスコアは同じ順位として扱う（タイ計算）
-  const ranks = [];
-  currentData.forEach((item, i) => {
-    if (i > 0 && Number(item.score || 0) === Number(currentData[i - 1].score || 0)) {
-      ranks.push(ranks[i - 1]);
-    } else {
-      ranks.push(i + 1);
-    }
-  });
-
   // 1. 【1〜3位：行表示】
   [top1, top2, top3].forEach((item, idx) => {
     if (!item) return;
     const rankNum = idx + 1;
-    const medal = ranks[idx] === 1 ? '👑' : ranks[idx] === 2 ? '🥈' : ranks[idx] === 3 ? '🥉' : '🏅';
+    const key = item.account_id || item.nickname || item.name;
+    const myRank = rankMap[key];
+    const medal = myRank === 1 ? '👑' : myRank === 2 ? '🥈' : myRank === 3 ? '🥉' : '🏅';
     html += `
-      <div class="rank-row rank-row-${rankNum}">
-        <span class="rank-row-badge">${medal} ${ranks[idx]}位</span>
-        <span class="rank-row-name">${escapeHtml(item.nickname || item.name)}</span>
+      <div class="rank-row rank-row-${rankNum}${diffClass(key)}">
+        <span class="rank-row-badge">${medal} ${myRank}位</span>
+        <span class="rank-row-name">${escapeHtml(item.nickname || item.name)} ${diffBadge(key)}</span>
         <span class="rank-row-score">${Number(item.score || 0).toLocaleString()}点</span>
       </div>
     `;
@@ -349,12 +458,13 @@ function renderCurrentPage() {
   if (currentSubItems.length > 0) {
     html += `<div class="sub-rank-grid" style="margin-top:12px;">`;
     currentSubItems.forEach((item, idx) => {
-      const rankNum = ranks[3 + subStartIndex + idx];
+      const key = item.account_id || item.nickname || item.name;
+      const rankNum = rankMap[key];
       html += `
-        <div class="sub-rank-card">
+        <div class="sub-rank-card${diffClass(key)}">
           <div style="display:flex; align-items:center; gap:8px; min-width:0;">
             <span class="sub-rank-badge">${rankNum}</span>
-            <span style="font-weight:700; font-size:0.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(item.nickname || item.name)}</span>
+            <span style="font-weight:700; font-size:0.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(item.nickname || item.name)} ${diffBadge(key)}</span>
           </div>
           <span style="font-weight:800; font-size:1rem; color:var(--primary-color); white-space:nowrap;">${Number(item.score || 0).toLocaleString()}点</span>
         </div>
@@ -371,6 +481,155 @@ function switchCategory(category, el) {
   document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
   if (el) el.classList.add('active');
   fetchViewerData(category, true);
+}
+
+// --- 追加機能 ---
+function initToolbar() {
+  const search = document.getElementById('search-input');
+  if (search) search.addEventListener('input', (e) => {
+    searchQuery = e.target.value.trim();
+    currentPage = 0;
+    renderCurrentPage();
+  });
+
+  const countSel = document.getElementById('count-select');
+  if (countSel) countSel.addEventListener('change', (e) => {
+    displayCount = e.target.value === 'all' ? 'all' : Number(e.target.value);
+    currentPage = 0;
+    renderCurrentPage();
+  });
+
+  const freezeBtn = document.getElementById('freeze-btn');
+  if (freezeBtn) freezeBtn.addEventListener('click', () => {
+    freezeMode = !freezeMode;
+    freezeBtn.textContent = freezeMode ? '🔥 更新再開' : '🧊 更新停止';
+    const fb = document.getElementById('freeze-banner');
+    if (fb) fb.style.display = freezeMode ? 'block' : 'none';
+    const fr = document.getElementById('viewer-ranking');
+    if (fr) fr.classList.toggle('frozen', freezeMode);
+  });
+
+  const podiumBtn = document.getElementById('podium-btn');
+  if (podiumBtn) podiumBtn.addEventListener('click', () => {
+    podiumMode = !podiumMode;
+    podiumBtn.classList.toggle('active', podiumMode);
+    currentPage = 0;
+    renderCurrentPage();
+  });
+
+  const largeBtn = document.getElementById('large-btn');
+  if (largeBtn) largeBtn.addEventListener('click', () => {
+    document.body.classList.toggle('monitor-large');
+    largeBtn.classList.toggle('active');
+  });
+
+  const themeBtn = document.getElementById('theme-btn');
+  if (themeBtn) themeBtn.addEventListener('click', () => {
+    if (THEMES[themeIdx]) document.body.classList.remove(THEMES[themeIdx]);
+    themeIdx = (themeIdx + 1) % THEMES.length;
+    if (THEMES[themeIdx]) document.body.classList.add(THEMES[themeIdx]);
+  });
+
+  const qrBtn = document.getElementById('qr-toggle-btn');
+  if (qrBtn) qrBtn.addEventListener('click', () => {
+    qrTargetViewer = !qrTargetViewer;
+    setupQRCode();
+  });
+
+  const bgmBtn = document.getElementById('bgm-btn');
+  if (bgmBtn) bgmBtn.addEventListener('click', () => {
+    if (bgmOn) stopBGM(); else startBGM();
+  });
+
+  const csvBtn = document.getElementById('csv-btn');
+  if (csvBtn) csvBtn.addEventListener('click', exportCSV);
+}
+
+// QRコード生成（表示対象を切り替え可能）
+function setupQRCode() {
+  const qrEl = document.getElementById('qr-code');
+  if (!qrEl) return;
+  let targetUrl;
+  if (qrTargetViewer) {
+    targetUrl = window.location.href.split('#')[0];
+  } else {
+    targetUrl = (typeof CONFIG !== 'undefined' && CONFIG.GOOGLE_FORM_BASE_URL)
+      ? CONFIG.GOOGLE_FORM_BASE_URL.split('&entry.')[0]
+      : window.location.href;
+  }
+  qrEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(targetUrl)}`;
+  const cap = document.getElementById('qr-caption');
+  if (cap) cap.textContent = qrTargetViewer ? 'スマートフォンでスキャン' : 'スコア登録フォームへ';
+}
+
+// CSVエクスポート（現在表示中のランキング）
+function exportCSV() {
+  const data = getCurrentTargetData();
+  if (!data || data.length === 0) { alert('データがありません'); return; }
+  const lines = ['順位,ニックネーム,スコア'];
+  let lastScore = null, lastRank = 0;
+  data.forEach((item, i) => {
+    const score = Number(item.score || 0);
+    const rank = (i > 0 && score === lastScore) ? lastRank : i + 1;
+    lastScore = score; lastRank = rank;
+    const name = String(item.nickname || item.name || '').replace(/"/g, '""');
+    lines.push(`${rank},"${name}",${score}`);
+  });
+  const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `ranking_${currentTab}_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// --- BGM（無料・外部ファイル不要の WebAudio 生成音） ---
+// ブラウザの自動再生制限対策として、最初のクリック/タッチで小さく再生開始
+document.addEventListener('pointerdown', function startOnFirstTouch() {
+  if (!bgmOn) startBGM();
+  document.removeEventListener('pointerdown', startOnFirstTouch);
+});
+
+let bgmOn = false;
+let bgmCtx = null;
+let bgmGain = null;
+let bgmTimer = null;
+
+function startBGM() {
+  const bgmBtn = document.getElementById('bgm-btn');
+  try {
+    if (!bgmCtx) {
+      bgmCtx = new (window.AudioContext || window.webkitAudioContext)();
+      bgmGain = bgmCtx.createGain();
+      bgmGain.gain.value = 0.04; // 小さめ音量
+      bgmGain.connect(bgmCtx.destination);
+    }
+    bgmCtx.resume();
+    const notes = [523, 659, 784, 659, 880, 784, 659, 523]; // C長調の簡単メロディ
+    let i = 0;
+    if (bgmTimer) clearInterval(bgmTimer);
+    bgmTimer = setInterval(() => {
+      const osc = bgmCtx.createOscillator();
+      osc.type = 'triangle';
+      osc.frequency.value = notes[i % notes.length];
+      osc.connect(bgmGain);
+      osc.start();
+      osc.stop(bgmCtx.currentTime + 0.25);
+      i++;
+    }, 280);
+    bgmOn = true;
+    if (bgmBtn) bgmBtn.textContent = '🎵 BGM OFF';
+  } catch (e) {
+    console.error('BGM error:', e);
+  }
+}
+
+function stopBGM() {
+  const bgmBtn = document.getElementById('bgm-btn');
+  if (bgmTimer) clearInterval(bgmTimer);
+  bgmTimer = null;
+  bgmOn = false;
+  if (bgmBtn) bgmBtn.textContent = '🎵 BGM ON';
 }
 
 // PWA サービスワーカー登録

@@ -34,6 +34,30 @@
       <button class="tab-btn active" onclick="switchCategory('total', this)">2日合計</button>
     </div>
 
+    <!-- 表示操作ツールバー -->
+    <div class="toolbar">
+      <input id="search-input" class="toolbar-input" type="text" placeholder="🔍 ニックネーム検索">
+      <select id="count-select" class="toolbar-select">
+        <option value="10">上位10位</option>
+        <option value="20">上位20位</option>
+        <option value="all">全件</option>
+      </select>
+      <button id="freeze-btn" class="toolbar-btn">🧊 更新停止</button>
+      <button id="podium-btn" class="toolbar-btn">🏅 表彰台モード</button>
+      <button id="large-btn" class="toolbar-btn">🔍 大型表示</button>
+      <button id="theme-btn" class="toolbar-btn">🎨 テーマ</button>
+      <button id="qr-toggle-btn" class="toolbar-btn">📱 QR切替</button>
+      <button id="bgm-btn" class="toolbar-btn">🎵 BGM ON</button>
+      <button id="csv-btn" class="toolbar-btn">💾 CSV</button>
+    </div>
+
+    <div id="status-line" class="status-line">
+      <span id="last-updated">最終更新: --</span>
+      <span id="next-refresh"></span>
+    </div>
+    <div id="offline-banner" class="offline-banner" style="display:none;">⚠️ 通信エラーのためキャッシュを表示しています</div>
+    <div id="freeze-banner" class="freeze-banner" style="display:none;">🔒 更新を停止しています（凍結モード）</div>
+
     <!-- ランキング一覧表示領域 ＆ QRコード（左右配置） -->
     <div class="content-layout">
       <main id="viewer-ranking" class="ranking-list">
@@ -43,7 +67,7 @@
       <!-- 右側：QRコードエリア -->
       <aside class="qr-section">
         <div class="qr-title">📱 ランキングはこちら</div>
-        <div class="qr-sub">スマートフォンでスキャン</div>
+        <div class="qr-sub" id="qr-caption">スマートフォンでスキャン</div>
         <div class="qr-card">
           <img id="qr-code" src="" alt="QRコード">
         </div>
