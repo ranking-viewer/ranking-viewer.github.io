@@ -3,7 +3,7 @@
 function detectTodayDay() {
   try {
     const now = new Date();
-    const start = new Date('2026-10-03T00:00:00+09:00');
+    const start = new Date('2026-10-04T00:00:00+09:00');
     return now >= start ? 'day2' : 'day1';
   } catch (e) {
     return 'day2';

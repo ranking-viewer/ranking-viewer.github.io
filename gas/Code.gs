@@ -173,7 +173,7 @@ function onFormSubmit(e) {
     }
 
     // 3. 日程判定 (例: 2026-10-02以降はDay 2)
-    const day2Start = new Date('2026-10-03T00:00:00');
+    const day2Start = new Date('2026-10-04T00:00:00');
     const eventDay = timestamp >= day2Start ? 2 : 1;
 
     // スプレッドシートへ書き戻し

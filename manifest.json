@@ -1,7 +1,7 @@
 {
   "name": "TopScore LIVE",
   "short_name": "TopScore",
-  "start_url": "./index.html",
+  "start_url": "./detail.html",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#2563eb",
