@@ -3,29 +3,218 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>会場モニター - ランキング</title>
-  <link rel="stylesheet" href="/css/monitor.css">
+  <title>リアルタイム ランキングモニター</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #0f172a;
+      color: #ffffff;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    header {
+      background: linear-gradient(90deg, #1e293b, #334155);
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #38bdf8;
+    }
+    h1 { font-size: 2rem; color: #f8fafc; letter-spacing: 2px; }
+    .last-update { font-size: 1rem; color: #94a3b8; }
+
+    /* メインレイアウト（左：ランキング / 右：QRコード） */
+    .main-container {
+      display: flex;
+      flex: 1;
+      padding: 20px;
+      gap: 20px;
+      height: calc(100vh - 80px);
+    }
+
+    /* 左側：ランキングエリア */
+    .ranking-section {
+      flex: 3;
+      background: #1e293b;
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+    .ranking-list {
+      list-style: none;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .ranking-item {
+      display: flex;
+      align-items: center;
+      background: #334155;
+      padding: 15px 25px;
+      border-radius: 12px;
+      font-size: 1.4rem;
+      font-weight: bold;
+      transition: transform 0.2s, background 0.2s;
+    }
+
+    /* 順位ごとの装飾 */
+    .rank-badge {
+      width: 70px;
+      text-align: center;
+      font-size: 1.6rem;
+      font-weight: 900;
+      margin-right: 20px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: #475569;
+    }
+    .rank-1 .rank-badge { background: #eab308; color: #0f172a; } /* 金 */
+    .rank-2 .rank-badge { background: #94a3b8; color: #0f172a; } /* 銀 */
+    .rank-3 .rank-badge { background: #b45309; color: #ffffff; } /* 銅 */
+
+    .player-name { flex: 1; }
+    .player-score { font-size: 1.8rem; color: #38bdf8; }
+
+    /* 右側：QRコードサイドバー */
+    .qr-section {
+      flex: 1;
+      background: #1e293b;
+      border-radius: 16px;
+      padding: 30px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      border: 1px solid #334155;
+    }
+    .qr-title { font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; color: #f8fafc; }
+    .qr-sub { font-size: 1rem; color: #94a3b8; margin-bottom: 20px; }
+    .qr-card {
+      background: #ffffff;
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .qr-card img { width: 180px; height: 180px; display: block; }
+  </style>
 </head>
 <body>
-  <!-- ブラウザの音声自動再生ブロック解除用オーバーレイ -->
-  <div id="audio-enable-overlay" onclick="enableAudio()">
-    <h1 style="font-size: 2.5rem; margin-bottom: 16px;">🔊 音声演出を有効化</h1>
-    <p style="color: var(--text-sub); font-size: 1.2rem;">画面をクリックしてモニターを開始してください</p>
+
+  <header>
+    <h1>🏆 ランキングボード</h1>
+    <div class="last-update" id="update-time">最終更新: --:--:--</div>
+  </header>
+
+  <div class="main-container">
+    <!-- ランキング表示部 -->
+    <section class="ranking-section">
+      <ul class="ranking-list" id="ranking-list">
+        <li class="ranking-item">データ読込中...</li>
+      </ul>
+    </section>
+
+    <!-- 右側：QRコードエリア -->
+    <section class="qr-section">
+      <div class="qr-title">📱 詳細はこちら</div>
+      <div class="qr-sub">スマートフォンでスキャン</div>
+      <div class="qr-card">
+        <img id="qr-code" src="" alt="QRコード">
+      </div>
+    </section>
   </div>
 
-  <div class="monitor-header">
-    <div class="monitor-title">LEADERBOARD</div>
-    <div class="live-indicator">
-      <div class="live-dot"></div> LIVE
-    </div>
-  </div>
+  <script src="js/config.js"></script>
+  <script>
+    // ページロード時初期化
+    window.addEventListener("DOMContentLoaded", () => {
+      setupQRCode();
+      fetchRankingData();
+      setInterval(fetchRankingData, CONFIG.AUTO_REFRESH_INTERVAL);
+    });
 
-  <div id="monitor-ranking" class="ranking-board">
-    <!-- 描画領域 -->
-  </div>
+    // 右側QRコードの生成 (index.html へのリンク)
+    function setupQRCode() {
+      // 現在のドメインパスから index.html のURLを動的生成
+      const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+      const targetUrl = baseUrl + "index.html";
+      
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(targetUrl)}`;
+      document.getElementById("qr-code").src = qrApiUrl;
+    }
 
-  <script src="/js/config.js"></script>
-  <script src="/js/auth.js"></script>
-  <script src="/js/monitor.js"></script>
+    // データ取得＆更新
+    async function fetchRankingData() {
+      try {
+        const response = await fetch(CONFIG.GAS_API_URL);
+        const rawData = await response.json();
+
+        // 過去データをクリアし、最新データで再計算
+        const rankedData = calculateTiedRanks(rawData.scores || rawData);
+        renderRanking(rankedData);
+
+        document.getElementById("update-time").textContent = `最終更新: ${new Date().toLocaleTimeString()}`;
+      } catch (error) {
+        console.error("データ取得失敗:", error);
+      }
+    }
+
+    // 同順位（タイ）計算ロジック
+    function calculateTiedRanks(data) {
+      // スコアが高い順にソート
+      const sorted = [...data].sort((a, b) => Number(b.score) - Number(a.score));
+
+      let currentRank = 1;
+      return sorted.map((item, index, arr) => {
+        if (index > 0) {
+          // 直前の人とスコアが違う場合のみ順位を更新（同点なら同じ順位のまま）
+          if (Number(item.score) < Number(arr[index - 1].score)) {
+            currentRank = index + 1;
+          }
+        }
+        return {
+          ...item,
+          rank: currentRank
+        };
+      });
+    }
+
+    // ランキングの表示更新（過去データは完全にクリアして上書き）
+    function renderRanking(data) {
+      const listEl = document.getElementById("ranking-list");
+      listEl.innerHTML = ""; // 画面クリア
+
+      if (!data || data.length === 0) {
+        listEl.innerHTML = '<li class="ranking-item">現在データはありません</li>';
+        return;
+      }
+
+      data.forEach(item => {
+        const li = document.createElement("li");
+        li.className = `ranking-item rank-${item.rank}`;
+        li.innerHTML = `
+          <div class="rank-badge">${item.rank}位</div>
+          <div class="player-name">${escapeHtml(item.name)}</div>
+          <div class="player-score">${item.score} pt</div>
+        `;
+        listEl.appendChild(li);
+      });
+    }
+
+    // XSS対策
+    function escapeHtml(str) {
+      return String(str || '').replace(/[&<>"']/g, match => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[match]);
+    }
+  </script>
 </body>
 </html>
