@@ -321,16 +321,25 @@ function renderCurrentPage() {
     </div>
   `;
 
+  // 同じスコアは同じ順位として扱う（タイ計算）
+  const ranks = [];
+  currentData.forEach((item, i) => {
+    if (i > 0 && Number(item.score || 0) === Number(currentData[i - 1].score || 0)) {
+      ranks.push(ranks[i - 1]);
+    } else {
+      ranks.push(i + 1);
+    }
+  });
+
   // 1. 【1〜3位：行表示】
   [top1, top2, top3].forEach((item, idx) => {
     if (!item) return;
     const rankNum = idx + 1;
-    const newBadge = item.is_new ? '<span style="background:#ef4444; color:white; font-size:0.65rem; font-weight:bold; padding:2px 6px; border-radius:6px; margin-left:6px;">NEW</span>' : '';
-    const medal = rankNum === 1 ? '👑' : rankNum === 2 ? '🥈' : '🥉';
+    const medal = ranks[idx] === 1 ? '👑' : ranks[idx] === 2 ? '🥈' : ranks[idx] === 3 ? '🥉' : '🏅';
     html += `
       <div class="rank-row rank-row-${rankNum}">
-        <span class="rank-row-badge">${medal} ${rankNum}位</span>
-        <span class="rank-row-name">${escapeHtml(item.nickname || item.name)}${newBadge}</span>
+        <span class="rank-row-badge">${medal} ${ranks[idx]}位</span>
+        <span class="rank-row-name">${escapeHtml(item.nickname || item.name)}</span>
         <span class="rank-row-score">${Number(item.score || 0).toLocaleString()}点</span>
       </div>
     `;
@@ -340,13 +349,12 @@ function renderCurrentPage() {
   if (currentSubItems.length > 0) {
     html += `<div class="sub-rank-grid" style="margin-top:12px;">`;
     currentSubItems.forEach((item, idx) => {
-      const rankNum = 4 + subStartIndex + idx;
-      const newBadge = item.is_new ? '<span style="background:#ef4444; color:white; font-size:0.6rem; font-weight:bold; padding:1px 5px; border-radius:6px; margin-left:4px;">NEW</span>' : '';
+      const rankNum = ranks[3 + subStartIndex + idx];
       html += `
         <div class="sub-rank-card">
           <div style="display:flex; align-items:center; gap:8px; min-width:0;">
             <span class="sub-rank-badge">${rankNum}</span>
-            <span style="font-weight:700; font-size:0.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(item.nickname || item.name)}${newBadge}</span>
+            <span style="font-weight:700; font-size:0.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(item.nickname || item.name)}</span>
           </div>
           <span style="font-weight:800; font-size:1rem; color:var(--primary-color); white-space:nowrap;">${Number(item.score || 0).toLocaleString()}点</span>
         </div>
