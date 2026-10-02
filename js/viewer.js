@@ -141,17 +141,8 @@ function startPageRotation() {
   if (autoPageTimer) clearInterval(autoPageTimer);
   
   autoPageTimer = setInterval(() => {
-    if (freezeMode) return;
-    const currentData = getCurrentTargetData();
-    const subPerPage = 3; // 4位以下の小表示は1ページ3件
-    if (currentData.length > 3) {
-      const remainingCount = currentData.length - 3;
-      const maxSubPages = Math.ceil(remainingCount / subPerPage);
-      if (maxSubPages > 1) {
-        currentPage = (currentPage + 1) % maxSubPages;
-        renderCurrentPage();
-      }
-    }
+    // 詳細ページは全件表示のためスライド不要（凍結中も何もしない）
+    return;
   }, PAGE_ROTATE_INTERVAL);
 }
 
@@ -425,8 +416,8 @@ function renderCurrentPage() {
   const top3 = displayData[2];
   const restItems = podiumMode ? [] : displayData.slice(3);
 
-  // 下部グリッドのスライドページ計算
-  const subItemsPerPage = 3; // 3の下に4,5,6位を小さく表示
+  // 詳細ページでは4位以下も最後までまとめて表示
+  const subItemsPerPage = Math.max(restItems.length, 1);
   const maxSubPages = Math.max(1, Math.ceil(restItems.length / subItemsPerPage));
   if (currentPage >= maxSubPages) currentPage = 0;
 

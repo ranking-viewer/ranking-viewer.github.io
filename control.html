@@ -32,11 +32,6 @@
   </div>
 
   <div class="group">
-    <h2>QRコード</h2>
-    <button id="qr">📱 QR切替（閲覧 / 登録フォーム）</button>
-  </div>
-
-  <div class="group">
     <h2>その他</h2>
     <button id="bgm">🎵 BGM 切替</button>
     <button id="csv">💾 CSV出力</button>
@@ -56,7 +51,6 @@
       $('freeze').classList.toggle('active', get('topscore_freeze') === '1');
       $('podium').classList.toggle('active', get('topscore_podium') === '1');
       $('large').classList.toggle('active', get('topscore_large') === '1');
-      $('qr').textContent = get('topscore_qr') === 'form' ? '📱 QR：登録フォーム（タップで閲覧に）' : '📱 QR：閲覧ページ（タップでフォームに）';
       $('bgm').textContent = get('topscore_bgm') === 'off' ? '🎵 BGM：OFF（タップでON）' : '🎵 BGM：ON（タップでOFF）';
     }
 
@@ -69,7 +63,6 @@
       reflect();
       $('theme').textContent = '🎨 テーマ：' + (['通常', 'フェスタ', 'ダーク'][themeIdx]);
     };
-    $('qr').onclick = () => { set('topscore_qr', get('topscore_qr') === 'form' ? 'viewer' : 'form'); reflect(); };
     $('bgm').onclick = () => { set('topscore_bgm', get('topscore_bgm') === 'off' ? 'on' : 'off'); reflect(); };
 
     $('csv').onclick = async () => {
