@@ -3,7 +3,7 @@ const CONFIG = {
   GAS_API_URL: "https://script.google.com/macros/s/AKfycbwbylY4DsmteJXz8Ek2Y5ymz-o31edhXzVjwSPX0qjIn0EqPN3mTtP9eoB4kUNwthl4/exec",
 
   // 司会・スタッフ用入力画面の認証パスワード
-  ADMIN_PASSWORD: "top",
+  ADMIN_PASSWORD: "admin1234",
 
   // 自動更新・データ取得間隔（ミリ秒）
   AUTO_REFRESH_INTERVAL: 5000, // 5秒
