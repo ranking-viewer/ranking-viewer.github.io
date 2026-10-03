@@ -119,6 +119,8 @@
 </head>
 <body>
 
+  <button id="bgm-btn" style="position:fixed; top:56px; right:12px; z-index:20; background:#334155; color:#fff; border:none; border-radius:8px; padding:8px 12px; font-weight:700; cursor:pointer;">🎵 BGM</button>
+
   <!-- 上部お知らせバー -->
   <div class="ticker-bar">
     <div class="ticker-clock" id="live-clock">00:00:00</div>
@@ -153,7 +155,21 @@
 
   <script src="js/config.js"></script>
   <script>
-    // 当日判定（2026/10/03以降は2日目）
+    // BGM（music/bgm.mp3 をリピート再生）
+    const bgmAudio = new Audio('music/bgm.mp3');
+    bgmAudio.loop = true;
+    bgmAudio.volume = 0.15;
+    document.addEventListener('pointerdown', function startOnTouch() {
+      bgmAudio.play().catch(() => {});
+      document.removeEventListener('pointerdown', startOnTouch);
+    }, { once: true });
+    document.getElementById('bgm-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (bgmAudio.paused) { bgmAudio.play(); e.target.textContent = '🎵 BGM'; }
+      else { bgmAudio.pause(); e.target.textContent = '🔇 停止中'; }
+    });
+
+    // 当日判定（2026/10/04以降は2日目）
     function detectTodayDay() {
       return new Date() >= new Date('2026-10-04T00:00:00+09:00') ? 'day2' : 'day1';
     }

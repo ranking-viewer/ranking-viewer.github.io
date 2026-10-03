@@ -1,0 +1,1 @@
+{"ranking":[{"account_id":"テスト送信","nickname":"テスト送信","score":100,"is_new":true},{"account_id":"11","nickname":"11","score":11,"is_new":true},{"account_id":"れい","nickname":"れい","score":1,"is_new":true},{"account_id":"れあ","nickname":"れあ","score":1,"is_new":true},{"account_id":"クレイジー","nickname":"クレイジー","score":1,"is_new":true}]}
