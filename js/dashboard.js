@@ -122,8 +122,13 @@ async function saveSettings() {
       })
     });
     const data = await res.json();
-    alert(data.status === 'success' ? '設定を保存しました' : '保存に失敗しました');
+    if (data.status === 'success') {
+      alert('設定を保存しました');
+      await loadAdminData(); // 保存された値を再読み込みして確認
+    } else {
+      alert('保存に失敗しました: ' + (data.message || '不明なエラー'));
+    }
   } catch (e) {
-    alert('通信エラー');
+    alert('通信エラー: ' + e.message);
   }
 }

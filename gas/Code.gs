@@ -111,7 +111,7 @@ function doPost(e) {
     // 管理者設定保存
     if (contents.action === 'save_settings') {
       if (contents.token === props.getProperty('ADMIN_TOKEN')) {
-        if (contents.one_time_key) props.setProperty('ONE_TIME_KEY', contents.one_time_key);
+        if (contents.one_time_key !== undefined) props.setProperty('ONE_TIME_KEY', contents.one_time_key);
         if (contents.ng_words !== undefined) props.setProperty('NG_WORDS', contents.ng_words);
         return createJsonResponse({ status: 'success' });
       }
